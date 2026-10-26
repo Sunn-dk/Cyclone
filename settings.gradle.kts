@@ -14,3 +14,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "ImageOptXml"
 include(":app")
+
+include(":probe")

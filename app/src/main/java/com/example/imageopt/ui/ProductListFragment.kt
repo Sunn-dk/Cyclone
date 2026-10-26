@@ -183,9 +183,11 @@ class ProductListFragment : Fragment(R.layout.fragment_product_list) {
         val spec = automation ?: return
         if (exporting) return
         exporting = true
+        _binding?.tvRunStatus?.text = "Đã dừng đo · đang lưu ${spec.label}"
         MeasurementSession.stop(reason)
         viewLifecycleOwner.lifecycleScope.launch {
             try {
+                delay(50) // Cập nhật nhãn sau khi dừng đo.
                 spec.finish(requireActivity(), reason)
                 _binding?.tvRunStatus?.text = "Đã lưu ${spec.label}"
             } catch (e: CancellationException) { throw e }

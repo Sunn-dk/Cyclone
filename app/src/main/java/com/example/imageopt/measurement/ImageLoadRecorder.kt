@@ -176,6 +176,7 @@ object ImageLoadRecorder : EventListener.Factory {
     }
 
     fun exportCsv(context: Context): File {
+        check(MeasurementSession.hasSession) { "Chưa có phiên đo để xuất." }
         check(!MeasurementSession.isActive) { "Hãy dừng đo trước khi xuất kết quả." }
         val file = File(context.getExternalFilesDir(null) ?: context.filesDir, "requests_${System.currentTimeMillis()}.csv")
         file.writeText(csv(snapshot()))

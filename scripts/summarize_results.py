@@ -67,7 +67,7 @@ def main():
     def table(rows):
         keys=list(rows[0])
         return "| "+" | ".join(keys)+" |\n|"+"---|"*len(keys)+"\n"+"\n".join("| "+" | ".join(display(r[k]) for k in keys)+" |" for r in rows)
-    text="# Tổng hợp kỹ thuật từ dữ liệu thật\n\nKhông phải chương báo cáo tiểu luận. Mỗi ô là median của 3 giá trị từng lượt tương ứng; PSS là median các max lấy mẫu, không phải max liên tục. Frame p90 là median của p90 từng lượt. Mẫu riêng ở all_trials.csv và ZIP gốc.\n\n"+table(summary)+"\n\n## Định dạng — D/100/cold\n\n"+table(formats)+"\n\nPayload là tổng dung lượng tệp tương ứng với request NETWORK thành công, tra files.json; không phải byte TCP/TLS/HTTP thực trên dây. Nhiệt/pin có lưu từng lượt; không khóa xungCPU. Không suy cải thiện riêng từng kỹ thuật từ A/D. Mốc viewport gồm ảnh lỗi nên đọc viewport_errors; các lượt chính này không có lỗi. Trace, stress cancel và prime không trộn vào bảng A/D chính.\n\nLượt trước khi sửa tự cuộn nằm ở excluded-before-scroll-fix, bị loại vì không thực sự cuộn và dùng build trước sửa; không chọn lọc loại vì số đo xấu. Toàn bộ batch cũ được giữ, batch cuối chạy lại đủ.\n"
+    text="# Tổng hợp kỹ thuật từ dữ liệu thật\n\nKhông phải chương báo cáo tiểu luận. Mỗi ô là median của 3 giá trị từng lượt tương ứng; PSS là median các max lấy mẫu, không phải max liên tục. Frame p90 là median của p90 từng lượt. Mẫu riêng ở all_trials.csv và ZIP gốc.\n\n"+table(summary)+"\n\n## Định dạng — D/100/cold\n\n"+table(formats)+"\n\nPayload là tổng dung lượng tệp tương ứng với request NETWORK thành công, tra files.json; không phải byte TCP/TLS/HTTP thực trên dây. Nhiệt/pin có lưu từng lượt; không khóa xungCPU. Không suy cải thiện riêng từng kỹ thuật từ A/D. Mốc viewport gồm ảnh lỗi nên đọc viewport_errors; các lượt chính này không có lỗi. Trace, stress cancel và prime không trộn vào bảng A/D chính.\n\nKhông gộp số đo Sony v3 vào ma trận máy ảo v3.1. Các lượt thử công cụ trước bản APK cuối được giữ riêng và không dùng để so sánh hiệu năng.\n"
     (out/"KET_QUA_KY_THUAT.md").write_text(text,encoding="utf-8")
     try:
         import matplotlib
@@ -93,7 +93,8 @@ def main():
             ax.bar(np.arange(3)+offset,values,width=.34,color=color,alpha=.65,label=config)
         ax.set_title(title,fontsize=10);ax.set_xticks(range(3),["100","500","1000"]);ax.set_xlabel("Dataset item count");ax.grid(axis="y",alpha=.2);ax.set_axisbelow(True)
     axes.flat[0].legend(title="Config")
-    fig.suptitle("Cyclone / Sony SO-51A / benchmark / local JPEG / n=3\nBars: median, dots: individual trials; load and scroll are separate",fontsize=11)
+    model=json.loads((ev/"final-suite/conditions.json").read_text(encoding="utf-8"))["model"]
+    fig.suptitle(f"Cyclone / {model} / benchmark / local JPEG / n=3\nBars: median, dots: individual trials; load and scroll are separate",fontsize=11)
     fig.savefig(out/"comparison.png",dpi=170);plt.close(fig)
     print(json.dumps({"trial_rows":len(all_rows),"comparison_groups":len(summary),"format_groups":len(formats),"all_assertions_passed":True}))
 if __name__=="__main__":main()

@@ -17,11 +17,21 @@ def locate(nodes,key):
             return n,b
     return None
 def tap(r,key,scroll=False):
-    for _ in range(9 if scroll else 1):
-        found=locate(ui(r),key)
-        if found:
-            n,b=found;r.adbcall("shell","input","tap",(b[0]+b[2])//2,(b[1]+b[3])//2);return
-        r.adbcall("shell","input","swipe",540,2100,540,650,300)
+    for direction in ((1,-1) if scroll else (1,)):
+        for attempt in range(10 if scroll else 1):
+            nodes=ui(r)
+            found=locate(nodes,key)
+            if found and (not scroll or found[1][3]-found[1][1]>=60):
+                n,b=found
+                r.adbcall("shell","input","tap",(b[0]+b[2])//2,(b[1]+b[3])//2)
+                return
+            containers=[n for n in nodes if n.get("scrollable")=="true"]
+            candidate=containers[0] if containers else next(n for n in nodes if n.get("resource-id")==PKG+":id/content")
+            box=bounds(candidate);x=(box[0]+box[2])//2
+            low=int(box[1]+(box[3]-box[1])*.78);high=int(box[1]+(box[3]-box[1])*.40)
+            if key=="btnRefresh" and locate(nodes,"tvStats"):direction=-1
+            start,end=(low,high) if direction==1 else (high,low)
+            r.adbcall("shell","input","swipe",x,start,x,end,650)
     raise RuntimeError("Control not visible: "+key)
 def save(path,value): Path(path).write_text(json.dumps(value,ensure_ascii=False,indent=2),encoding="utf-8")
 
@@ -58,7 +68,16 @@ def main():
         selected_lines=[l for l in focus.splitlines() if "mResumedActivity" in l]
         checks["share_chooser_opened"]=any("ChooserActivity" in l or "ResolverActivity" in l for l in selected_lines)
         save(r.out/"share-chooser.json",selected_lines)
-        r.adbcall("shell","input","keyevent",4);time.sleep(.4)
+        chooser_focus=[]
+        for attempt in range(3):
+            focus=r.adbcall("shell","dumpsys","activity","activities")
+            active=[line for line in focus.splitlines() if "mResumedActivity" in line]
+            chooser_focus.append(active)
+            if not any("ChooserActivity" in line or "ResolverActivity" in line for line in active):break
+            r.adbcall("shell","input","keyevent",4);time.sleep(.5)
+        save(r.out/"chooser-dismiss.json",chooser_focus)
+        focus=r.adbcall("shell","dumpsys","activity","activities")
+        assert not any("ChooserActivity" in line or "ResolverActivity" in line for line in focus.splitlines() if "mResumedActivity" in line),"Share chooser still active"
         r.run("E_polish",config="E",cache="cold",restart=True,expected="network")
         tap(r,"name");time.sleep(1);save(r.out/"E-detail-ui.json",ui(r))
         tap(r,"btnBack");time.sleep(.5)
@@ -75,5 +94,6 @@ def main():
         checks["all_assertions"]=all(checks.values())
         save(r.out/"regression-assertions.json",checks)
         print(json.dumps(checks),flush=True)
+        assert checks["all_assertions"],checks
     finally: r.close()
 if __name__=="__main__": main()

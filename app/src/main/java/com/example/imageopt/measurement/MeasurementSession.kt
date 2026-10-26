@@ -75,6 +75,7 @@ object MeasurementSession {
         val draws: Map<Int, Draw>, val viewportReadyMs: Long?, val requests: ImageLoadRecorder.Snapshot
     )
 
+    val hasSession: Boolean get() = synchronized(lock) { run != null }
     val isActive: Boolean get() = synchronized(lock) { run?.stopNs == null && run != null }
     val currentRunId: Long? get() = synchronized(lock) { run?.takeIf { it.stopNs == null }?.id }
 
@@ -237,12 +238,20 @@ object MeasurementSession {
         val failed = ids?.count { s.draws[it]?.success == false } ?: 0
         appendLine("Viewport đầu: ${ids?.size ?: 0} ảnh, sẵn sàng $completed, lỗi $failed.")
         appendLine("Sẵn sàng vẽ viewport (pre-draw): ${s.viewportReadyMs?.let { "$it ms" } ?: "chưa đạt"} từ lúc phiên bắt đầu.")
+        val successReady = s.viewportReadyMs?.takeIf { ids != null && failed == 0 && completed == ids.size }
+        appendLine("Đủ ảnh thành công trong viewport: ${successReady?.let { "$it ms" } ?: "chưa đạt"}.")
         appendLine("Mốc gồm cả ảnh lỗi; không phải FullyDrawn hay thời điểm pixel xuất hiện trên màn hình.")
         val peak = s.memory.maxOfOrNull { it.pssKb }
         appendLine(String.format(Locale.US, "PSS đỉnh lấy mẫu: %s MiB, n=%d, chu kỳ ≥500 ms.",
             peak?.let { String.format(Locale.US, "%.2f", it / 1024.0) } ?: "—", s.memory.size))
+        appendLine("CPU toàn tiến trình trong phiên: ${s.cpuMs} ms (tổng các luồng, không phải CPU%).")
         appendLine("PSS tính cả tiến trình; lấy mẫu có thể bỏ lỡ đỉnh giữa hai lần đo.")
         val eligible = s.frames.filter { !it.firstDraw && it.budgetNs > 0 }
+        val deadlineFrames = s.frames.filter { !it.firstDraw && it.deadlineNs > 0 }
+        if (deadlineFrames.isNotEmpty()) {
+            val missed = deadlineFrames.count { it.totalNs >= it.deadlineNs }
+            appendLine("Frame trễ hạn hệ thống: $missed/${deadlineFrames.size} (API31+, TOTAL_DURATION >= DEADLINE).")
+        } else appendLine("Frame deadline hệ thống: chưa có số đo (cần API31+).")
         val over = eligible.count { it.totalNs > it.budgetNs }
         val percent = if (eligible.isEmpty()) "—" else String.format(Locale.US, "%.2f", over * 100.0 / eligible.size)
         appendLine("Frame vượt 1 chu kỳ màn hình: $over/${eligible.size} ($percent%).")
@@ -291,7 +300,7 @@ object MeasurementSession {
     private fun json(s: Snapshot): JSONObject {
         val eligible = s.frames.filter { !it.firstDraw && it.budgetNs > 0 }
         return JSONObject().apply {
-            put("schemaVersion", 3)
+            put("schemaVersion", 4)
             put("automation", JSONObject(s.metadata))
             put("processCpuMs", s.cpuMs)
             put("processId", android.os.Process.myPid())
@@ -327,6 +336,7 @@ object MeasurementSession {
             put("initialViewportIds", JSONArray(s.initialIds.orEmpty().sorted()))
             put("viewportCapturedMs", s.viewportCapturedMs ?: JSONObject.NULL)
             put("viewportTerminalPreDrawMs", s.viewportReadyMs ?: JSONObject.NULL)
+            put("viewportSuccessfulPreDrawMs", s.viewportReadyMs?.takeIf { s.initialIds != null && s.initialIds.all { s.draws[it]?.success == true } } ?: JSONObject.NULL)
             put("viewportErrorCount", s.initialIds.orEmpty().count { s.draws[it]?.success == false })
             put("warnings", JSONArray(s.warnings))
             put("definitions", JSONObject().apply {

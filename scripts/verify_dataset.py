@@ -24,4 +24,4 @@ def verify(root):
     return {"passed":True,"manifest":meta,"files_verified":len(entries),"payload_bytes":sum(e["bytes"] for e in entries),"subsets":subsets,"index_sha256":hashlib.sha256((root/"files.json").read_bytes()).hexdigest()}
 if __name__=="__main__":
     p=argparse.ArgumentParser();p.add_argument("root");p.add_argument("--out",default="dataset-verification.json");a=p.parse_args()
-    result=verify(a.root);Path(a.out).write_text(json.dumps(result,indent=2),encoding="utf-8");print(json.dumps(result))
+    result=verify(a.root);output=Path(a.out);output.parent.mkdir(parents=True,exist_ok=True);output.write_text(json.dumps(result,indent=2),encoding="utf-8");print(json.dumps(result))

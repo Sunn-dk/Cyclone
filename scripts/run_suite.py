@@ -24,6 +24,8 @@ class Runner:
         info={}
         for name,prop in [("model","ro.product.model"),("android","ro.build.version.release"),("api","ro.build.version.sdk")]:
             info[name]=self.adbcall("shell","getprop",prop).strip()
+        info["serial"]=self.serial
+        info["boot_id"]=self.adbcall("shell","cat","/proc/sys/kernel/random/boot_id",check=False).strip()
         info["screen"]=self.adbcall("shell","wm","size").strip()
         info["memory"]=self.adbcall("shell","cat","/proc/meminfo").splitlines()[0]
         info["app_package"]=self.adbcall("shell","dumpsys","package",PKG)
@@ -47,7 +49,7 @@ class Runner:
         time.sleep(.8)
         if self.server.poll() is not None: raise RuntimeError("Server exited; check server.log and port 8000.")
 
-    def run(self,name,config="D",count=100,mode="load",cache="keep",restart=False,position=0,fmt="JPEG",delay=0,error=False,version=1,capture=True,expected=None,max_ms=45000):
+    def run(self,name,config="D",count=100,mode="load",cache="keep",restart=False,position=0,fmt="JPEG",delay=0,error=False,version=1,capture=True,expected=None,max_ms=45000,source="http://127.0.0.1:8000"):
         label=self.prefix+"_"+name
         folder=self.out/name;folder.mkdir(exist_ok=True)
         self.adbcall("shell","input","keyevent",224)
@@ -57,14 +59,16 @@ class Runner:
         before=self.adbcall("shell","dumpsys","battery")
         command=["shell","am","start","-W","-n",PKG+"/.MainActivity","--ez","automation","true",
                  "--es","run_label",label,"--es","config",config,"--ei","count",str(count),
-                 "--es","source","http://127.0.0.1:8000","--es","format",fmt,
+                 "--es","source",source,"--es","format",fmt,
                  "--es","mode",mode,"--es","cache",cache,"--ei","position",str(position),
                  "--ei","delay_ms",str(delay),"--ei","url_version",str(version),
                  "--ez","image_error",str(error).lower(),"--ez","capture",str(capture).lower(),
                  "--el","max_ms",str(max_ms),"--el","min_ms","2000"]
         result=self.adbcall(*command)
         (folder/"launch.txt").write_text(result,encoding="utf-8")
-        spec=dict(label=label,name=name,config=config,count=count,mode=mode,cache=cache,restart=restart,position=position,format=fmt,delay_ms=delay,error=error,url_version=version,capture=capture,expected=expected,max_ms=max_ms)
+        if "Activity: android/com.android.internal.app.ChooserActivity" in result:
+            raise RuntimeError("Close the Cyclone share chooser before starting another trial.")
+        spec=dict(label=label,name=name,config=config,count=count,mode=mode,cache=cache,restart=restart,position=position,format=fmt,delay_ms=delay,error=error,url_version=version,capture=capture,expected=expected,max_ms=max_ms,source=source)
         (folder/"trial.json").write_text(json.dumps(spec,indent=2),encoding="utf-8")
         deadline=time.monotonic()+max_ms/1000+25
         done=None
@@ -88,8 +92,8 @@ class Runner:
             summary=json.loads(z.read("summary.json"))
             requests=list(csv.DictReader(io.StringIO(z.read("requests.csv").decode("utf-8"))))
             for file in z.namelist(): (folder/file).write_bytes(z.read(file))
-        assert summary["buildType"]=="benchmark","Use benchmark APK."
-        assert summary["versionName"]=="3.0"
+        assert summary["buildType"]==getattr(self.args,"build_type","benchmark"),"Unexpected APK build type."
+        assert summary["versionName"]=="3.1"
         assert summary["automation"]["label"]==label
         assert int(summary["automation"]["uniqueRawUrls"])==count
         assert int(summary["automation"]["uniqueThumbUrls"])==count
@@ -101,6 +105,7 @@ class Runner:
             checks["actual_scroll_progress"]=int(summary["automation"].get("scrollEndMaxPosition",-1))>int(summary["automation"].get("scrollStartMaxPosition",999999)) and int(summary["automation"].get("scrollDistancePx",0))>0
         if expected=="network": checks["network_success"]=counts["NETWORK"]>0 and not errors
         elif expected=="memory": checks["memory_hit"]=counts["MEMORY_CACHE"]>0 and counts["NETWORK"]==0 and not errors
+        elif expected=="cache": checks["cache_hit"]=counts["DISK"]+counts["MEMORY_CACHE"]>0 and counts["NETWORK"]==0 and not errors
         elif expected=="disk": checks["disk_hit"]=counts["DISK"]>0 and counts["NETWORK"]==0 and not errors
         elif expected=="offline_error": checks["offline_fallback"]=len(errors)>0 and counts["NETWORK"]==0
         elif expected=="404": checks["http_404"]=any("404" in r["error"] for r in errors)
