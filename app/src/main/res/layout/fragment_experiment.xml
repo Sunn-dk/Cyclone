@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent"  android:fillViewport="true" android:clipToPadding="false">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="24dp">
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnBack" style="@style/Widget.ImageOpt.Button.Text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_marginTop="4dp" android:text="@string/ui_back_feed" app:icon="@drawable/ic_arrow_back" app:iconTint="@color/ui_text"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="24dp" android:layout_marginTop="8dp" android:text="@string/ui_lab_title" android:textAppearance="@style/TextAppearance.ImageOpt.Heading"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="24dp" android:layout_marginTop="6dp" android:text="@string/ui_lab_subtitle" android:textAppearance="@style/TextAppearance.ImageOpt.Body"/>
+        <com.google.android.material.card.MaterialCardView style="@style/Widget.ImageOpt.Card" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="16dp" android:layout_marginTop="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="0dp" android:text="@string/ui_config_title" android:textAppearance="@style/TextAppearance.ImageOpt.Section"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/ui_config_hint" android:textAppearance="@style/TextAppearance.ImageOpt.Body"/>
+                <RadioGroup android:id="@+id/rgConfig" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="8dp">
+                    <com.google.android.material.radiobutton.MaterialRadioButton android:id="@+id/rbA" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+                    <com.google.android.material.radiobutton.MaterialRadioButton android:id="@+id/rbB" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+                    <com.google.android.material.radiobutton.MaterialRadioButton android:id="@+id/rbC" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+                    <com.google.android.material.radiobutton.MaterialRadioButton android:id="@+id/rbD" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+                    <com.google.android.material.radiobutton.MaterialRadioButton android:id="@+id/rbE" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+                </RadioGroup>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="@string/ui_count_title" android:textAppearance="@style/TextAppearance.ImageOpt.Section"/>
+                <RadioGroup android:id="@+id/rgCount" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
+                    <com.google.android.material.radiobutton.MaterialRadioButton android:id="@+id/rb100" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/ui_count_100"/>
+                    <com.google.android.material.radiobutton.MaterialRadioButton android:id="@+id/rb500" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/ui_count_500"/>
+                    <com.google.android.material.radiobutton.MaterialRadioButton android:id="@+id/rb1000" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/ui_count_1000"/>
+                </RadioGroup>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.card.MaterialCardView style="@style/Widget.ImageOpt.Card" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="16dp" android:layout_marginTop="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="0dp" android:text="@string/ui_source_title" android:textAppearance="@style/TextAppearance.ImageOpt.Section"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/ui_source_hint" android:textAppearance="@style/TextAppearance.ImageOpt.Body"/>
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:hint="@string/ui_base_url" app:boxCornerRadiusTopStart="16dp" app:boxCornerRadiusTopEnd="16dp" app:boxCornerRadiusBottomStart="16dp" app:boxCornerRadiusBottomEnd="16dp">
+                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etBaseUrl" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="56dp" android:inputType="textUri" android:textSize="14sp" android:textColor="@color/ui_text" android:importantForAutofill="no" android:maxLines="2"/>
+                </com.google.android.material.textfield.TextInputLayout>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="@string/ui_format_title" android:textAppearance="@style/TextAppearance.ImageOpt.Section"/>
+                <RadioGroup android:id="@+id/rgFormat" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
+                    <com.google.android.material.radiobutton.MaterialRadioButton android:id="@+id/rbJpeg" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/ui_jpeg"/>
+                    <com.google.android.material.radiobutton.MaterialRadioButton android:id="@+id/rbPng" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/ui_png"/>
+                    <com.google.android.material.radiobutton.MaterialRadioButton android:id="@+id/rbWebp" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/ui_webp"/>
+                </RadioGroup>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_format_hint" android:textAppearance="@style/TextAppearance.ImageOpt.Body"/>
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:hint="@string/ui_delay_label" app:boxCornerRadiusTopStart="16dp" app:boxCornerRadiusTopEnd="16dp" app:boxCornerRadiusBottomStart="16dp" app:boxCornerRadiusBottomEnd="16dp">
+                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etDelayMs" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="56dp" android:inputType="number" android:textSize="14sp" android:textColor="@color/ui_text" android:importantForAutofill="no" android:maxLength="5" android:singleLine="true"/>
+                </com.google.android.material.textfield.TextInputLayout>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_delay_hint" android:textAppearance="@style/TextAppearance.ImageOpt.Body"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnApplySource" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_apply_source"/>
+                <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchImageError" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:minHeight="56dp" android:text="@string/ui_simulate_error" android:textSize="14sp" android:textColor="@color/ui_text" android:paddingEnd="4dp" app:useMaterialThemeColors="true"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnVersion" style="@style/Widget.ImageOpt.Button.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_version"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_version_hint" android:textAppearance="@style/TextAppearance.ImageOpt.Body"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.card.MaterialCardView style="@style/Widget.ImageOpt.Card" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="16dp" android:layout_marginTop="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="0dp" android:text="@string/ui_cache_title" android:textAppearance="@style/TextAppearance.ImageOpt.Section"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/ui_cache_hint" android:textAppearance="@style/TextAppearance.ImageOpt.Body"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnClearMemory" style="@style/Widget.ImageOpt.Button.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_clear_memory"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnClear" style="@style/Widget.ImageOpt.Button.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_clear_all"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.card.MaterialCardView style="@style/Widget.ImageOpt.Card" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="16dp" android:layout_marginTop="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="0dp" android:text="@string/ui_measure_title" android:textAppearance="@style/TextAppearance.ImageOpt.Section"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/ui_measure_hint" android:textAppearance="@style/TextAppearance.ImageOpt.Body"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnMeasureStart" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_measure_start"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnMeasureStop" style="@style/Widget.ImageOpt.Button.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_measure_stop"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnReset" style="@style/Widget.ImageOpt.Button.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_reset"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.card.MaterialCardView style="@style/Widget.ImageOpt.Card" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="16dp" android:layout_marginTop="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="0dp" android:text="@string/ui_results_title" android:textAppearance="@style/TextAppearance.ImageOpt.Section"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/ui_results_hint" android:textAppearance="@style/TextAppearance.ImageOpt.Body"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnRefresh" style="@style/Widget.ImageOpt.Button.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_refresh" app:icon="@drawable/ic_refresh" app:iconGravity="textStart" app:iconTint="@color/ui_text"/>
+                <TextView android:id="@+id/tvStats" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:background="@drawable/bg_status" android:padding="14dp" android:fontFamily="monospace" android:text="@string/ui_stats_empty" android:textColor="@color/ui_text" android:textIsSelectable="true" android:textSize="12sp" android:lineSpacingExtra="4dp"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnExport" style="@style/Widget.ImageOpt.Button.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_export"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnShare" style="@style/Widget.ImageOpt.Button.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/ui_share" app:icon="@drawable/ic_share" app:iconGravity="textStart" app:iconTint="@color/ui_text"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+     android:fillViewport="true" android:clipToPadding="false">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingBottom="24dp">
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnBack"
+            style="@style/Widget.ImageOpt.Button.Text" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp" android:text="@string/ui_back"
+            app:icon="@drawable/ic_arrow_back" app:iconTint="@color/ui_text" />
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp" android:layout_marginTop="4dp"
+            app:cardCornerRadius="24dp" app:cardElevation="0dp" app:strokeWidth="0dp"
+            app:cardBackgroundColor="@color/ui_placeholder">
+            <com.example.imageopt.ui.AspectImageView android:id="@+id/image"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:scaleType="fitCenter" android:importantForAccessibility="no" />
+        </com.google.android.material.card.MaterialCardView>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp" android:layout_marginTop="24dp"
+            android:text="@string/ui_detail_eyebrow" android:textColor="@color/ui_accent"
+            android:textSize="11sp" android:fontFamily="sans-serif-medium" android:letterSpacing="0.12" />
+        <TextView android:id="@+id/name" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp" android:layout_marginTop="8dp"
+            android:textAppearance="@style/TextAppearance.ImageOpt.Heading" />
+        <TextView android:id="@+id/price" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp" android:layout_marginTop="8dp"
+            android:textColor="@color/ui_text" android:textSize="18sp" android:fontFamily="sans-serif-medium" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp" android:layout_marginTop="16dp"
+            android:text="@string/ui_detail_note" android:textAppearance="@style/TextAppearance.ImageOpt.Body" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnRetry"
+            style="@style/Widget.ImageOpt.Button.Outlined" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="16dp" android:text="@string/ui_retry"
+            app:icon="@drawable/ic_refresh" app:iconGravity="textStart" app:iconTint="@color/ui_text" />
+    </LinearLayout>
+</ScrollView>

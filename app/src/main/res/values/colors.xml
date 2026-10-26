@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ui_background">#FAF8F5</color>
+    <color name="ui_surface">#FFFFFF</color>
+    <color name="ui_text">#25201E</color>
+    <color name="ui_muted">#746D67</color>
+    <color name="ui_accent">#C9002B</color>
+    <color name="ui_accent_soft">#FFE9EE</color>
+    <color name="ui_outline">#E8E1DA</color>
+    <color name="ui_control_outline">#8F837A</color>
+    <color name="ui_placeholder">#EEE8E2</color>
+    <color name="ui_chip">#F0EBE5</color>
+    <color name="ui_white">#FFFFFF</color>
+</resources>

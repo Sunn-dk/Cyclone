@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" >
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical"
+        android:paddingStart="20dp" android:paddingEnd="16dp" android:paddingTop="8dp">
+        <ImageView android:layout_width="32dp" android:layout_height="32dp"
+            android:src="@drawable/ic_brand" android:importantForAccessibility="no" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:layout_marginStart="8dp"
+            android:text="@string/ui_app_name" android:textColor="@color/ui_text"
+            android:textSize="21sp" android:fontFamily="sans-serif-medium" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnExperiment"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/ui_experiment" app:icon="@drawable/ic_tune"
+            app:iconSize="18dp" app:iconPadding="6dp" />
+    </LinearLayout>
+    <TextView android:id="@+id/title" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp" android:layout_marginTop="12dp"
+        android:text="@string/ui_explore" android:textAppearance="@style/TextAppearance.ImageOpt.Heading" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp" android:layout_marginTop="4dp"
+        android:text="@string/ui_explore_subtitle" android:textAppearance="@style/TextAppearance.ImageOpt.Body" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp" android:layout_marginTop="10dp"
+        android:orientation="horizontal" android:gravity="center_vertical">
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnAutoScroll"
+            style="@style/Widget.ImageOpt.Button.Outlined" android:layout_width="0dp"
+            android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/ui_auto_scroll" app:icon="@drawable/ic_play"
+            app:iconTint="@color/ui_text" app:iconSize="18dp" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnReload"
+            style="@style/Widget.ImageOpt.Button.Outlined" android:layout_width="0dp"
+            android:layout_height="wrap_content" android:layout_marginStart="8dp"
+            android:layout_weight="1" android:text="@string/ui_reload"
+            app:icon="@drawable/ic_refresh" app:iconTint="@color/ui_text" app:iconSize="18dp" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp" android:layout_marginTop="4dp"
+        android:layout_marginBottom="8dp" android:orientation="vertical"
+        android:background="@drawable/bg_status" android:paddingHorizontal="12dp" android:paddingVertical="8dp">
+        <TextView android:id="@+id/tvSourceStatus" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="@string/ui_source_default"
+            android:textColor="@color/ui_text" android:textSize="12sp" android:fontFamily="sans-serif-medium" />
+        <TextView android:id="@+id/tvRunStatus" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="2dp"
+            android:text="@string/ui_ready" android:textColor="@color/ui_muted" android:textSize="12sp"
+            android:accessibilityLiveRegion="polite" />
+    </LinearLayout>
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/recycler"
+        android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:paddingHorizontal="10dp" android:paddingTop="2dp" android:paddingBottom="16dp"
+        android:clipToPadding="false" android:scrollbars="none" />
+</LinearLayout>

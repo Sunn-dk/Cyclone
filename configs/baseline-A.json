@@ -1,0 +1,11 @@
+{
+  "config": "A",
+  "count": 100,
+  "source": "http://127.0.0.1:8000",
+  "format": "JPEG",
+  "url_version": 1,
+  "mode": "load",
+  "cache": "cold",
+  "min_ms": 2000,
+  "max_ms": 45000
+}
