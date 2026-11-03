@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
             }
             if (intent.hasExtra("count")) prefs.count = intent.getIntExtra("count", 100)
         }
-        vm.automationPreparing = intent.getBooleanExtra("automation", false)
+        vm.automationPreparing = savedInstanceState == null && intent.getBooleanExtra("automation", false)
         setContentView(R.layout.activity_main)
         if (savedInstanceState == null) handleIntent(intent)
     }

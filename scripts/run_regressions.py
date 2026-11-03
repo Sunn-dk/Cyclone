@@ -18,13 +18,17 @@ def locate(nodes,key):
     return None
 def tap(r,key,scroll=False):
     for direction in ((1,-1) if scroll else (1,)):
-        for attempt in range(10 if scroll else 1):
+        previous=None
+        for attempt in range(30 if scroll else 1):
             nodes=ui(r)
             found=locate(nodes,key)
             if found and (not scroll or found[1][3]-found[1][1]>=60):
                 n,b=found
                 r.adbcall("shell","input","tap",(b[0]+b[2])//2,(b[1]+b[3])//2)
                 return
+            signature=[(n.get("resource-id"),n.get("text"),n.get("bounds")) for n in nodes]
+            if scroll and signature==previous:break
+            previous=signature
             containers=[n for n in nodes if n.get("scrollable")=="true"]
             candidate=containers[0] if containers else next(n for n in nodes if n.get("resource-id")==PKG+":id/content")
             box=bounds(candidate);x=(box[0]+box[2])//2
@@ -32,6 +36,7 @@ def tap(r,key,scroll=False):
             if key=="btnRefresh" and locate(nodes,"tvStats"):direction=-1
             start,end=(low,high) if direction==1 else (high,low)
             r.adbcall("shell","input","swipe",x,start,x,end,650)
+    save(r.out/("unreachable-"+key+".json"),nodes)
     raise RuntimeError("Control not visible: "+key)
 def save(path,value): Path(path).write_text(json.dumps(value,ensure_ascii=False,indent=2),encoding="utf-8")
 

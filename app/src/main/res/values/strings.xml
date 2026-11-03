@@ -33,9 +33,9 @@
     <string name="ui_format_hint">PNG/WebP cần máy chủ demo. Nguồn Picsum mặc định dùng JPEG.</string>
     <string name="ui_simulate_error">Chèn ảnh lỗi vào bộ sưu tập</string>
     <string name="ui_version">Đổi phiên bản URL</string>
-    <string name="ui_version_hint">Tạo khóa ảnh mới để kiểm tra vô hiệu hóa cache theo URL.</string>
+    <string name="ui_version_hint">Ảnh đổi trên máy chủ cần URL phiên bản mới hoặc xóa cache. Nút này chỉ đổi URL, không sửa ảnh trên máy chủ.</string>
     <string name="ui_cache_title">03 / Bộ nhớ đệm</string>
-    <string name="ui_cache_hint">Xóa RAM để kiểm tra cache đĩa. Xóa cả hai để bắt đầu lượt tải lạnh.</string>
+    <string name="ui_cache_hint">Xóa RAM để kiểm tra cache đĩa. Xóa cả hai để tải lạnh. Chỉ xóa cache của cấu hình đang chọn; ảnh có thể bị loại khi cache đầy.</string>
     <string name="ui_clear_memory">Xóa cache RAM</string>
     <string name="ui_clear_all">Xóa RAM + đĩa</string>
     <string name="ui_measure_title">04 / Phiên đo</string>

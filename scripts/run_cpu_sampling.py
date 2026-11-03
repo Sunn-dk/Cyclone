@@ -17,23 +17,31 @@ def inspect_trace(path,out):
     record_size=struct.unpack_from("<H",binary,16)[0] if version==3 else 10
     assert record_size in (10,14)
     assert (len(binary)-offset)%record_size==0,"Incomplete binary record"
-    threads={};section="";methods=0
+    threads={};section="";methods=0;method_names={}
     for line in text.splitlines():
         if line.startswith("*"):section=line;continue
         if section=="*threads" and "\t" in line:
             tid,name=line.split("\t",1);threads[int(tid)]=name
-        if section=="*methods" and line.startswith("0x"):methods+=1
+        if section=="*methods" and line.startswith("0x"):
+            methods+=1
+            fields=line.split("\t")
+            method_names[int(fields[0],16)]=".".join(fields[1:3])
     groups=defaultdict(list)
+    decode_records=defaultdict(int)
     for pos in range(offset,len(binary),record_size):
         tid=struct.unpack_from("<H",binary,pos)[0]
+        method=method_names.get(struct.unpack_from("<I",binary,pos+2)[0] & ~3, "")
+        if method.startswith(("android.graphics.BitmapFactory.decode", "android.graphics.ImageDecoder.decodeBitmap")):
+            decode_records[tid]+=1
         # v3 dual clock stores per-thread CPU then wall time in microseconds.
         cpu_us=struct.unpack_from("<I",binary,pos+6)[0]
         groups[tid].append(cpu_us)
     rows=[dict(tid=tid,thread=threads.get(tid,""),records=len(values),
-          observed_cpu_delta_ms=(max(values)-min(values))/1000 if "clock=dual" in text else None)
+          observed_cpu_delta_ms=(max(values)-min(values))/1000 if "clock=dual" in text else None,
+          bitmap_decode_transition_records=decode_records[tid])
           for tid,values in groups.items()]
     with (out/"cpu_threads.csv").open("w",encoding="utf-8-sig",newline="") as f:
-        w=csv.DictWriter(f,fieldnames=["tid","thread","records","observed_cpu_delta_ms"]);w.writeheader();w.writerows(rows)
+        w=csv.DictWriter(f,fieldnames=["tid","thread","records","observed_cpu_delta_ms","bitmap_decode_transition_records"]);w.writeheader();w.writerows(rows)
     result=dict(format="ART method sampling",version=version,record_size=record_size,
         records=sum(len(v) for v in groups.values()),threads=len(groups),methods=methods,
         clock="dual" if "clock=dual" in text else "single",

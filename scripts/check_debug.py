@@ -16,7 +16,7 @@ try:
     save(r.out/"empty-export-ui.json",ui(r))
     r.run("debug_smoke",cache="cold",restart=False,expected="network")
     summary=json.loads((r.out/"debug_smoke/summary.json").read_text())
-    checks["debug_build_confirmed"]=summary["buildType"]=="debug" and summary["versionName"]=="3.1"
+    checks["debug_build_confirmed"]=summary["buildType"]=="debug" and summary["versionName"]=="3.2"
     checks["successful_viewport_separate"]=summary["viewportSuccessfulPreDrawMs"] is not None
     tap(r,"btnExperiment");tap(r,"btnRefresh",scroll=True)
     tap(r,"tvStats",scroll=True)

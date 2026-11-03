@@ -1,8 +1,8 @@
 package com.example.imageopt.ui
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.doOnLayout
 import androidx.core.view.doOnPreDraw
 import androidx.recyclerview.widget.RecyclerView
 import coil.ImageLoader
@@ -24,48 +24,42 @@ class ProductAdapter(
     override fun getItemId(position: Int) = items[position].id.toLong()
     override fun getItemCount() = items.size
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-        VH(ItemProductBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+        VH(ItemProductBinding.inflate(LayoutInflater.from(parent.context), parent, false)).also {
+            it.binding.root.clipToOutline = true
+        }
     override fun onBindViewHolder(holder: VH, position: Int) = holder.bind(items[position])
     override fun onViewRecycled(holder: VH) { holder.cancel(); super.onViewRecycled(holder) }
 
     inner class VH(val binding: ItemProductBinding) : RecyclerView.ViewHolder(binding.root) {
         private var token = 0L
-        private var layoutListener: View.OnLayoutChangeListener? = null
         fun cancel() {
             token++
-            layoutListener?.let { binding.thumb.removeOnLayoutChangeListener(it) }
-            layoutListener = null
             binding.thumb.dispose()
         }
         fun bind(p: Product) {
-            binding.root.clipToOutline = true
             cancel()
             val expected = token
             val thumb = binding.thumb
             thumb.setImageResource(R.drawable.bg_placeholder)
             val params = thumb.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
-            params.dimensionRatio = "H,${p.imageWidth}:${p.imageHeight}"
-            thumb.layoutParams = params
+            val ratio = "H,${p.imageWidth}:${p.imageHeight}"
+            if (params.dimensionRatio != ratio) {
+                params.dimensionRatio = ratio
+                thumb.layoutParams = params
+            }
             binding.name.text = p.name
             binding.price.text = p.price
+            binding.root.contentDescription = binding.root.context.getString(R.string.ui_open_product, p.name, p.price)
             binding.root.setOnClickListener { onClick(p) }
-            // Chờ layout mới để không dùng kích thước của ảnh trước.
-            val listener = object : View.OnLayoutChangeListener {
-                override fun onLayoutChange(v: View, l: Int, t: Int, r: Int, b: Int,
-                                            oldL: Int, oldT: Int, oldR: Int, oldB: Int) {
-                    thumb.removeOnLayoutChangeListener(this)
-                    layoutListener = null
-                    if (expected != token || thumb.width <= 0 || thumb.height <= 0) return
-                    ImageRequests.loadList(thumb, p, config, loader) { success ->
-                        thumb.doOnPreDraw {
-                            if (expected == token && thumb.isAttachedToWindow) onImageReady(p.id, success)
-                        }
+            // Chờ đúng kích thước ô, không ép layout lại nếu tỷ lệ không đổi.
+            thumb.doOnLayout {
+                if (expected != token || thumb.width <= 0 || thumb.height <= 0) return@doOnLayout
+                ImageRequests.loadList(thumb, p, config, loader) { success ->
+                    thumb.doOnPreDraw {
+                        if (expected == token && thumb.isAttachedToWindow) onImageReady(p.id, success)
                     }
                 }
             }
-            layoutListener = listener
-            thumb.addOnLayoutChangeListener(listener)
-            thumb.requestLayout()
         }
     }
 }

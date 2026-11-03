@@ -44,7 +44,7 @@ try:
     r.adbcall("pull","/sdcard/Android/data/com.example.cycloneprobe/files/result.json",str(dest))
     result=json.loads(dest.read_text())
     assert result["grant_flag"] and result["read_ok"],result
-    assert result["summary"]["versionName"]=="3.1"
+    assert result["summary"]["versionName"]=="3.2"
     expected=json.loads((r.out/"share_session/summary.json").read_text())
     assert result["summary"]["automation"]["label"]==expected["automation"]["label"],"Stale receiver result"
     uri_path=unquote(urlparse(result["uri"]).path)
@@ -56,7 +56,7 @@ try:
     main_uid=uid(PKG);receiver_uid=uid("com.example.cycloneprobe")
     checks=dict(read_grant=True,separate_uid=main_uid!=receiver_uid,main_uid=main_uid,receiver_uid=receiver_uid,zip_read_ok=True,
         sha256_matches=hashlib.sha256(original.read_bytes()).hexdigest()==result["sha256"],
-        version_3_1=True)
+        version_3_2=True)
     assert checks["sha256_matches"] and checks["separate_uid"]
     save(r.out/"assertions.json",checks);print(json.dumps(checks),flush=True)
 finally:r.close()

@@ -16,6 +16,8 @@ class Runner:
         self.serial=args.serial or (devices[0] if len(devices)==1 else None)
         if not self.serial: raise RuntimeError("Select exactly one device with --serial.")
         self.out=Path(args.out).resolve();self.out.mkdir(parents=True,exist_ok=True)
+        if (self.out/"all_trials.csv").exists():
+            raise FileExistsError("Keep existing trial evidence; choose a new --out directory.")
         self.prefix=datetime.now().strftime("%Y%m%d_%H%M%S")
         self.rows=[]
         self.server=None
@@ -27,6 +29,7 @@ class Runner:
         info["serial"]=self.serial
         info["boot_id"]=self.adbcall("shell","cat","/proc/sys/kernel/random/boot_id",check=False).strip()
         info["screen"]=self.adbcall("shell","wm","size").strip()
+        info["renderer"]="\n".join(line.strip() for line in self.adbcall("shell","dumpsys","SurfaceFlinger").splitlines() if "GLES:" in line)
         info["memory"]=self.adbcall("shell","cat","/proc/meminfo").splitlines()[0]
         info["app_package"]=self.adbcall("shell","dumpsys","package",PKG)
         info["battery_before"]=self.adbcall("shell","dumpsys","battery")
@@ -93,7 +96,7 @@ class Runner:
             requests=list(csv.DictReader(io.StringIO(z.read("requests.csv").decode("utf-8"))))
             for file in z.namelist(): (folder/file).write_bytes(z.read(file))
         assert summary["buildType"]==getattr(self.args,"build_type","benchmark"),"Unexpected APK build type."
-        assert summary["versionName"]=="3.1"
+        assert summary["versionName"]=="3.2"
         assert summary["automation"]["label"]==label
         assert int(summary["automation"]["uniqueRawUrls"])==count
         assert int(summary["automation"]["uniqueThumbUrls"])==count
@@ -101,6 +104,7 @@ class Runner:
         counts=Counter(r["source"] for r in requests if r["outcome"]=="OK")
         errors=[r for r in requests if r["outcome"]=="ERROR"]
         checks={"metadata":True,"zip_readable":True}
+        if mode=="load": checks["viewport_terminal"]=summary["viewportTerminalPreDrawMs"] is not None
         if mode=="scroll":
             checks["actual_scroll_progress"]=int(summary["automation"].get("scrollEndMaxPosition",-1))>int(summary["automation"].get("scrollStartMaxPosition",999999)) and int(summary["automation"].get("scrollDistancePx",0))>0
         if expected=="network": checks["network_success"]=counts["NETWORK"]>0 and not errors
@@ -140,11 +144,16 @@ class Runner:
                  sampled_pss_peak_kib=summary["sampledPssPeakKb"],pss_samples=summary["pssSampleCount"],
                  frame_p90_ns=summary["frameP90Ns"],frames_over_period=summary["framesOverDisplayPeriod"],
                  eligible_frames=summary["eligibleFrames"],frames_with_deadline=summary.get("framesWithSystemDeadline"),frames_missing_deadline=summary.get("framesMissingSystemDeadline"),process_id=summary.get("processId"),process_cpu_ms=summary["processCpuMs"],
+                 gc_count=summary.get("artRuntimeDelta",{}).get("art.gc.gc-count"),
+                 gc_ms=summary.get("artRuntimeDelta",{}).get("art.gc.gc-time"),
+                 allocated_bytes=summary.get("artRuntimeDelta",{}).get("art.gc.bytes-allocated"),
+                 layout_p90_ns=summary.get("layoutMeasureP90Ns"),draw_p90_ns=summary.get("drawP90Ns"),sync_p90_ns=summary.get("syncP90Ns"),
                  passed=checks["pass"],evidence=name+"/run.zip")
         self.rows.append(row)
         with (self.out/"all_trials.csv").open("w",encoding="utf-8-sig",newline="") as f:
             writer=csv.DictWriter(f,fieldnames=list(row));writer.writeheader();writer.writerows(self.rows)
         print(json.dumps(row,ensure_ascii=False),flush=True)
+        assert checks["pass"], (name, checks)
         time.sleep(.25)
         return row
 

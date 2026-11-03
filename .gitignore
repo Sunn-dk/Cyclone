@@ -12,3 +12,11 @@ __pycache__/
 *.log
 
 /probe/build/
+
+/datasets/
+/.venv/
+/dist/
+*.jks
+*.keystore
+.env
+.env.*

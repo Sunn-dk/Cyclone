@@ -29,7 +29,7 @@ data class AutomationRun(
             val count = intent.getIntExtra("count", 100)
             require(count in listOf(100, 500, 1000))
             val mode = intent.getStringExtra("mode") ?: "load"
-            require(mode in listOf("load", "scroll"))
+            require(mode in listOf("load", "scroll", "traverse"))
             val cache = intent.getStringExtra("cache") ?: "keep"
             require(cache in listOf("cold", "memory", "keep"))
             return AutomationRun(label,

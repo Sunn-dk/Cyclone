@@ -32,18 +32,23 @@ object MeasurementSession {
     private const val MAX_FRAMES = 20_000
     private const val MAX_MEMORY_SAMPLES = 250
     private const val MAX_VIEWPORT_IDS = 500
+    private val RUNTIME_KEYS = setOf("art.gc.gc-count", "art.gc.gc-time", "art.gc.bytes-allocated",
+        "art.gc.blocking-gc-count", "art.gc.blocking-gc-time")
     private val lock = Any()
     private val sequence = AtomicLong()
     private val mainHandler = Handler(Looper.getMainLooper())
     private var run: Run? = null
     private var resources: Resources? = null
 
-    private data class Frame(val timeMs: Long, val totalNs: Long, val budgetNs: Long, val deadlineNs: Long, val firstDraw: Boolean, val dropped: Int)
+    private data class Frame(val timeMs: Long, val totalNs: Long, val budgetNs: Long, val deadlineNs: Long,
+        val firstDraw: Boolean, val dropped: Int, val layoutNs: Long, val drawNs: Long, val syncNs: Long)
     private data class Memory(val timeMs: Long, val pssKb: Int, val javaHeapKb: Long, val nativeHeapKb: Long)
     private data class Draw(val success: Boolean, val timeMs: Long)
     private class Run(val id: Long, val config: String, val count: Int, val source: String) {
         val cpuStartMs = android.os.Process.getElapsedCpuTime()
         var cpuStopMs: Long? = null
+        val runtimeStart = runtimeStats()
+        var runtimeStop: Map<String, Long>? = null
         val metadata = LinkedHashMap<String, String>()
         val startNs = System.nanoTime()
         val startedAtEpochMs = System.currentTimeMillis()
@@ -69,7 +74,7 @@ object MeasurementSession {
     )
     private data class Snapshot(
         val id: Long, val config: String, val count: Int, val source: String,
-        val startedAtEpochMs: Long, val durationMs: Long, val cpuMs: Long, val metadata: Map<String, String>, val active: Boolean, val stopReason: String,
+        val startedAtEpochMs: Long, val durationMs: Long, val cpuMs: Long, val runtimeDelta: Map<String, Long>, val metadata: Map<String, String>, val active: Boolean, val stopReason: String,
         val frames: List<Frame>, val memory: List<Memory>, val frameOverflow: Int, val memoryOverflow: Int,
         val warnings: List<String>, val initialIds: Set<Int>?, val viewportCapturedMs: Long?,
         val draws: Map<Int, Draw>, val viewportReadyMs: Long?, val requests: ImageLoadRecorder.Snapshot
@@ -95,7 +100,9 @@ object MeasurementSession {
             val budgetNs = if (refresh > 0 && refresh.isFinite()) (1_000_000_000.0 / refresh).toLong() else -1
             val deadlineNs = if (Build.VERSION.SDK_INT >= 31) metrics.getMetric(FrameMetrics.DEADLINE) else -1L
             val frame = Frame(elapsedMs(next), totalNs, budgetNs, deadlineNs,
-                metrics.getMetric(FrameMetrics.FIRST_DRAW_FRAME) == 1L, dropped.coerceAtLeast(0))
+                metrics.getMetric(FrameMetrics.FIRST_DRAW_FRAME) == 1L, dropped.coerceAtLeast(0),
+                metrics.getMetric(FrameMetrics.LAYOUT_MEASURE_DURATION), metrics.getMetric(FrameMetrics.DRAW_DURATION),
+                metrics.getMetric(FrameMetrics.SYNC_DURATION))
             synchronized(lock) {
                 if (run !== next || next.stopNs != null) return@synchronized
                 if (next.frames.size < MAX_FRAMES) next.frames.add(frame) else next.frameOverflow++
@@ -128,6 +135,7 @@ object MeasurementSession {
             val selected = run ?: return
             if (selected.stopNs != null) return
             selected.cpuStopMs = android.os.Process.getElapsedCpuTime()
+            selected.runtimeStop = runtimeStats()
             selected.stopNs = System.nanoTime()
             selected.stopReason = reason.take(200)
             ImageLoadRecorder.endRun(selected.id)
@@ -191,6 +199,10 @@ object MeasurementSession {
 
     private fun elapsedMs(selected: Run): Long = (System.nanoTime() - selected.startNs) / 1_000_000
 
+    private fun runtimeStats(): Map<String, Long> = Debug.getRuntimeStats().mapNotNull { (key, value) ->
+        if (key in RUNTIME_KEYS) value.toLongOrNull()?.let { key to it } else null
+    }.toMap()
+
     private fun sampleMemory(selected: Run) {
         try {
             val info = Debug.MemoryInfo()
@@ -213,9 +225,13 @@ object MeasurementSession {
 
     private fun snapshot(): Snapshot? = synchronized(lock) {
         val s = run ?: return@synchronized null
+        val end = s.runtimeStop ?: runtimeStats()
+        val runtimeDelta = s.runtimeStart.mapNotNull { (key, value) ->
+            end[key]?.minus(value)?.takeIf { it >= 0 }?.let { key to it }
+        }.toMap()
         Snapshot(s.id, s.config, s.count, s.source, s.startedAtEpochMs,
             ((s.stopNs ?: System.nanoTime()) - s.startNs) / 1_000_000,
-            (s.cpuStopMs ?: android.os.Process.getElapsedCpuTime()) - s.cpuStartMs, HashMap(s.metadata),
+            (s.cpuStopMs ?: android.os.Process.getElapsedCpuTime()) - s.cpuStartMs, runtimeDelta, HashMap(s.metadata),
             s.stopNs == null, s.stopReason, ArrayList(s.frames), ArrayList(s.memory), s.frameOverflow,
             s.memoryOverflow, s.warnings.toList(), s.initialIds?.toSet(), s.viewportCapturedMs,
             HashMap(s.imageDraws), s.viewportReadyMs, ImageLoadRecorder.snapshot())
@@ -245,6 +261,7 @@ object MeasurementSession {
         appendLine(String.format(Locale.US, "PSS đỉnh lấy mẫu: %s MiB, n=%d, chu kỳ ≥500 ms.",
             peak?.let { String.format(Locale.US, "%.2f", it / 1024.0) } ?: "—", s.memory.size))
         appendLine("CPU toàn tiến trình trong phiên: ${s.cpuMs} ms (tổng các luồng, không phải CPU%).")
+        appendLine("ART GC: ${s.runtimeDelta["art.gc.gc-count"] ?: "—"} lượt, tổng ${s.runtimeDelta["art.gc.gc-time"] ?: "—"} ms; không phải thời gian Main Thread bị dừng.")
         appendLine("PSS tính cả tiến trình; lấy mẫu có thể bỏ lỡ đỉnh giữa hai lần đo.")
         val eligible = s.frames.filter { !it.firstDraw && it.budgetNs > 0 }
         val deadlineFrames = s.frames.filter { !it.firstDraw && it.deadlineNs > 0 }
@@ -277,8 +294,8 @@ object MeasurementSession {
             }
             entry("requests.csv", ImageLoadRecorder.csv(s.requests))
             entry("frames.csv", buildString {
-                appendLine("runId,callbackTimeMs,totalNs,displayBudgetNs,systemDeadlineNs,firstDraw,overBudget,deadlineMissed,droppedCallbacks")
-                s.frames.forEach { f -> appendLine("${s.id},${f.timeMs},${f.totalNs},${f.budgetNs},${f.deadlineNs},${f.firstDraw},${!f.firstDraw && f.budgetNs > 0 && f.totalNs > f.budgetNs},${!f.firstDraw && f.deadlineNs > 0 && f.totalNs >= f.deadlineNs},${f.dropped}") }
+                appendLine("runId,callbackTimeMs,totalNs,displayBudgetNs,systemDeadlineNs,firstDraw,overBudget,deadlineMissed,droppedCallbacks,layoutMeasureNs,drawNs,syncNs")
+                s.frames.forEach { f -> appendLine("${s.id},${f.timeMs},${f.totalNs},${f.budgetNs},${f.deadlineNs},${f.firstDraw},${!f.firstDraw && f.budgetNs > 0 && f.totalNs > f.budgetNs},${!f.firstDraw && f.deadlineNs > 0 && f.totalNs >= f.deadlineNs},${f.dropped},${f.layoutNs},${f.drawNs},${f.syncNs}") }
             })
             entry("memory.csv", buildString {
                 appendLine("runId,timeMs,pssKb,javaHeapUsedKb,nativeHeapAllocatedKb")
@@ -300,7 +317,11 @@ object MeasurementSession {
     private fun json(s: Snapshot): JSONObject {
         val eligible = s.frames.filter { !it.firstDraw && it.budgetNs > 0 }
         return JSONObject().apply {
-            put("schemaVersion", 4)
+            put("schemaVersion", 5)
+            put("artRuntimeDelta", JSONObject(s.runtimeDelta))
+            put("layoutMeasureP90Ns", percentile(eligible.map { it.layoutNs }.filter { it >= 0 }, .9))
+            put("drawP90Ns", percentile(eligible.map { it.drawNs }.filter { it >= 0 }, .9))
+            put("syncP90Ns", percentile(eligible.map { it.syncNs }.filter { it >= 0 }, .9))
             put("automation", JSONObject(s.metadata))
             put("processCpuMs", s.cpuMs)
             put("processId", android.os.Process.myPid())
@@ -344,6 +365,7 @@ object MeasurementSession {
                 put("requestPercentiles", "Nearest-rank percentiles of retained successful terminal rows only; incomplete requests are censored, not zero-duration")
                 put("framesMissingSystemDeadline", "On API31+, TOTAL_DURATION >= FrameMetrics.DEADLINE excluding first-draw; app deadline overruns, not all compositor jank")
                 put("processCpuMs", "Process.getElapsedCpuTime delta during session, all app threads, milliseconds; not elapsed wall time or CPU percent")
+                put("artRuntimeDelta", "Approximate ART counter deltas in this session; GC duration is not a UI pause duration, allocated bytes are not live heap or bitmap memory")
                 put("requestTotalMs", "Coil EventListener onStart to onSuccess/onError/onCancel; excludes callbacks after stop; not draw latency")
                 put("decodeMs", "Sum of completed Coil decoder callback intervals; -1 when not observed")
                 put("sampledPssPeakKb", "Maximum process PSS observed at 500ms plus work/scheduling intervals; not continuous peak")

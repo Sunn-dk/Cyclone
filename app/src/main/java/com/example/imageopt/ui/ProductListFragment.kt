@@ -7,6 +7,7 @@ import android.view.View
 import android.view.WindowManager
 import android.view.animation.LinearInterpolator
 import androidx.core.view.doOnPreDraw
+import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -30,7 +31,7 @@ class ProductListFragment : Fragment(R.layout.fragment_product_list) {
     private val vm: ProductViewModel by activityViewModels()
     private var _binding: FragmentProductListBinding? = null
     private var savedScroll: Parcelable? = null
-    private var savedRevision = -1L
+    private var savedContentKey: String? = null
     private var shown: GalleryState? = null
     private var autoScrolling = false
     private var scrollGeneration = 0L
@@ -42,6 +43,10 @@ class ProductListFragment : Fragment(R.layout.fragment_product_list) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentProductListBinding.bind(view)
         _binding = b
+        if (savedInstanceState != null) {
+            savedScroll = BundleCompat.getParcelable(savedInstanceState, "galleryScroll", Parcelable::class.java)
+            savedContentKey = savedInstanceState.getString("galleryContent")
+        }
         b.recycler.layoutManager = StaggeredGridLayoutManager(2, RecyclerView.VERTICAL)
         b.recycler.itemAnimator = null
         b.recycler.setHasFixedSize(true)
@@ -59,6 +64,7 @@ class ProductListFragment : Fragment(R.layout.fragment_product_list) {
             automation = spec
             exporting = false
             if (spec?.mode == "scroll") startScroll(state, spec)
+            else if (spec?.mode == "traverse") startTraversal(state, spec)
             else {
                 display(state, measuring, spec)
                 if (spec != null) waitForViewport(spec)
@@ -93,7 +99,7 @@ class ProductListFragment : Fragment(R.layout.fragment_product_list) {
             ))
         }
         val runId = MeasurementSession.currentRunId
-        val restore = !startMeasurement && state.revision == savedRevision
+        val restore = !startMeasurement && contentKey(state) == savedContentKey
         shown = state
         b.tvSourceStatus.text = "${state.config.name} · ${state.products.size} ảnh · ${state.source.format} · v${state.source.version}"
         b.tvRunStatus.text = if (MeasurementSession.isActive) "Đang đo · ${spec?.label ?: "mở Thử nghiệm để dừng"}"
@@ -161,6 +167,33 @@ class ProductListFragment : Fragment(R.layout.fragment_product_list) {
         }
     }
 
+    private fun startTraversal(state: GalleryState, spec: AutomationRun) {
+        display(state, true, spec)
+        val b = _binding ?: return
+        val runId = MeasurementSession.currentRunId ?: return
+        automationJob = viewLifecycleOwner.lifecycleScope.launch {
+            delay(spec.minMs)
+            val manager = b.recycler.layoutManager as StaggeredGridLayoutManager
+            val began = SystemClock.elapsedRealtime()
+            var furthest = manager.findLastVisibleItemPositions(null).max()
+            var returning = false
+            var steps = 0
+            while (_binding === b && MeasurementSession.currentRunId == runId &&
+                SystemClock.elapsedRealtime() - began < spec.maxMs - spec.minMs) {
+                if (!b.recycler.canScrollVertically(1)) returning = true
+                if (returning && !b.recycler.canScrollVertically(-1)) break
+                b.recycler.scrollBy(0, b.recycler.height * if (returning) -1 else 1)
+                steps++
+                delay(100)
+                furthest = maxOf(furthest, manager.findLastVisibleItemPositions(null).max())
+            }
+            MeasurementSession.setMetadata(mapOf("traversalFurthestPosition" to furthest.toString(),
+                "traversalReturnedToTop" to (!b.recycler.canScrollVertically(-1)).toString(),
+                "traversalSteps" to steps.toString()))
+            finishAutomation(if (returning && !b.recycler.canScrollVertically(-1)) "traversal_round_trip" else "traversal_time_limit")
+        }
+    }
+
     private fun finishScroll(reason: String) {
         if (!autoScrolling) return
         autoScrolling = false
@@ -212,7 +245,7 @@ class ProductListFragment : Fragment(R.layout.fragment_product_list) {
     override fun onDestroyView() {
         val b = _binding
         savedScroll = b?.recycler?.layoutManager?.onSaveInstanceState()
-        savedRevision = shown?.revision ?: -1
+        savedContentKey = shown?.let { contentKey(it) }
         automationJob?.cancel()
         finishScroll("view_destroyed")
         scrollTask?.let { b?.recycler?.removeCallbacks(it) }
@@ -220,4 +253,12 @@ class ProductListFragment : Fragment(R.layout.fragment_product_list) {
         _binding = null
         super.onDestroyView()
     }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable("galleryScroll", _binding?.recycler?.layoutManager?.onSaveInstanceState() ?: savedScroll)
+        outState.putString("galleryContent", shown?.let { contentKey(it) } ?: savedContentKey)
+    }
+
+    private fun contentKey(state: GalleryState) = "${state.config.name}|${state.products.size}|${state.source.description()}"
 }

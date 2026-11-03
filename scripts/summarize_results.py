@@ -49,9 +49,12 @@ def main():
         assert len(rows)==3,(scenario,count,config,len(rows))
         late=[number(r["frames_missing_deadline"])/number(r["frames_with_deadline"])*100 for r in rows if number(r["frames_with_deadline"])]
         summary.append(dict(scenario=scenario,count=count,config=config,n=len(rows),
+            viewport_observed_n=sum(number(r["viewport_predraw_ms"]) is not None for r in rows),
             viewport_ms=med(rows,"viewport_predraw_ms"),median_request_ms=med(rows,"median_request_ms"),
             median_decode_ms=med(rows,"median_decode_ms"),sampled_peak_pss_mib=med(rows,"sampled_pss_peak_kib")/1024,
             process_cpu_ms=med(rows,"process_cpu_ms"),frame_p90_ms=med(rows,"frame_p90_ns")/1e6,
+            gc_count=med(rows,"gc_count"),gc_ms=med(rows,"gc_ms"),allocated_bytes=med(rows,"allocated_bytes"),
+            layout_p90_ms=med(rows,"layout_p90_ns")/1e6,draw_p90_ms=med(rows,"draw_p90_ns")/1e6,sync_p90_ms=med(rows,"sync_p90_ns")/1e6,
             median_deadline_miss_pct=statistics.median(late) if late else None,
             median_response_file_payload_bytes=med(rows,"response_file_payload_bytes")))
     write_csv(out/"comparison.csv",summary)
@@ -67,7 +70,7 @@ def main():
     def table(rows):
         keys=list(rows[0])
         return "| "+" | ".join(keys)+" |\n|"+"---|"*len(keys)+"\n"+"\n".join("| "+" | ".join(display(r[k]) for k in keys)+" |" for r in rows)
-    text="# Tổng hợp kỹ thuật từ dữ liệu thật\n\nKhông phải chương báo cáo tiểu luận. Mỗi ô là median của 3 giá trị từng lượt tương ứng; PSS là median các max lấy mẫu, không phải max liên tục. Frame p90 là median của p90 từng lượt. Mẫu riêng ở all_trials.csv và ZIP gốc.\n\n"+table(summary)+"\n\n## Định dạng — D/100/cold\n\n"+table(formats)+"\n\nPayload là tổng dung lượng tệp tương ứng với request NETWORK thành công, tra files.json; không phải byte TCP/TLS/HTTP thực trên dây. Nhiệt/pin có lưu từng lượt; không khóa xungCPU. Không suy cải thiện riêng từng kỹ thuật từ A/D. Mốc viewport gồm ảnh lỗi nên đọc viewport_errors; các lượt chính này không có lỗi. Trace, stress cancel và prime không trộn vào bảng A/D chính.\n\nKhông gộp số đo Sony v3 vào ma trận máy ảo v3.1. Các lượt thử công cụ trước bản APK cuối được giữ riêng và không dùng để so sánh hiệu năng.\n"
+    text="# Tổng hợp kỹ thuật từ dữ liệu thật\n\nKhông phải chương báo cáo tiểu luận. Mỗi ô là median các giá trị quan sát; n là tổng lượt, viewport_observed_n là số lượt đạt mốc, không tự điền0 cho mốc thiếu; PSS là median các max lấy mẫu, không phải max liên tục. Frame p90 là median của p90 từng lượt. Mẫu riêng ở all_trials.csv và ZIP gốc.\n\n"+table(summary)+"\n\n## Định dạng — D/100/cold\n\n"+table(formats)+"\n\nPayload là tổng dung lượng tệp tương ứng với request NETWORK thành công, tra files.json; không phải byte TCP/TLS/HTTP thực trên dây. Nhiệt/pin có lưu từng lượt; không khóa xungCPU. Không suy cải thiện riêng từng kỹ thuật từ A/D. Mốc viewport gồm ảnh lỗi nên đọc viewport_errors; các lượt chính này không có lỗi. Trace, stress cancel và prime không trộn vào bảng A/D chính.\n\nKhông gộp số đo Sony v3 vào ma trận máy ảo v3.2. Các lượt thử công cụ trước bản APK cuối được giữ riêng và không dùng để so sánh hiệu năng.\n"
     (out/"KET_QUA_KY_THUAT.md").write_text(text,encoding="utf-8")
     try:
         import matplotlib

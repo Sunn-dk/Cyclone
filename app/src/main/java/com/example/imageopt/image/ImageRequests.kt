@@ -28,7 +28,7 @@ object ImageRequests {
     }
 
     fun loadDetail(view: ImageView, p: Product, config: ExperimentConfig, loader: ImageLoader) {
-        val url = if (config.polish) p.detailUrl else p.rawUrl
+        val url = if (config.thumbInList) p.detailUrl else p.rawUrl
         view.load(url, loader) {
             if (config.originalSize) size(Size.ORIGINAL)
             if (!config.useCache) {
