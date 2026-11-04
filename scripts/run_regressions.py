@@ -19,6 +19,7 @@ def locate(nodes,key):
 def tap(r,key,scroll=False):
     for direction in ((1,-1) if scroll else (1,)):
         previous=None
+        stalled=0
         for attempt in range(30 if scroll else 1):
             nodes=ui(r)
             found=locate(nodes,key)
@@ -27,11 +28,14 @@ def tap(r,key,scroll=False):
                 r.adbcall("shell","input","tap",(b[0]+b[2])//2,(b[1]+b[3])//2)
                 return
             signature=[(n.get("resource-id"),n.get("text"),n.get("bounds")) for n in nodes]
-            if scroll and signature==previous:break
+            stalled=stalled+1 if signature==previous else 0
+            if scroll and stalled>=2:break
             previous=signature
             containers=[n for n in nodes if n.get("scrollable")=="true"]
             candidate=containers[0] if containers else next(n for n in nodes if n.get("resource-id")==PKG+":id/content")
-            box=bounds(candidate);x=(box[0]+box[2])//2
+            box=bounds(candidate)
+            # Vuốt mép ScrollView để không kéo chọn nội dung thống kê.
+            x=box[0]+min(10,(box[2]-box[0])//2)
             low=int(box[1]+(box[3]-box[1])*.78);high=int(box[1]+(box[3]-box[1])*.40)
             if key=="btnRefresh" and locate(nodes,"tvStats"):direction=-1
             start,end=(low,high) if direction==1 else (high,low)

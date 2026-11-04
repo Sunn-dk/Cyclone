@@ -12,9 +12,22 @@ r=Runner(a)
 try:
     r.run("share_session",cache="cold",restart=True,expected="network")
     tap(r,"btnExperiment");tap(r,"btnShare",scroll=True);time.sleep(1)
-    r.adbcall("shell","uiautomator","dump","/data/local/tmp/cyclone-share.xml")
-    root=ET.fromstring(r.adbcall("shell","cat","/data/local/tmp/cyclone-share.xml"))
-    matches=[n for n in root.iter("node") if n.get("text")=="Kiểm tra ZIP Cyclone"]
+    for attempt in range(5):
+        r.adbcall("shell","uiautomator","dump","/data/local/tmp/cyclone-share.xml")
+        root=ET.fromstring(r.adbcall("shell","cat","/data/local/tmp/cyclone-share.xml"))
+        matches=[n for n in root.iter("node") if n.get("text")=="Kiểm tra ZIP Cyclone"]
+        if len(matches)==1:break
+        header=next((dict(n.attrib) for n in root.iter("node") if n.get("resource-id")=="android:id/chooser_header"),None)
+        assert header is not None,"Android chooser is not visible"
+        b=bounds(header)
+        # Sony mở bảng chia sẻ thu gọn; kéo tiêu đề lên để thấy app nhận ZIP.
+        if b[1]>400:
+            x=(b[0]+b[2])//2;start=(b[1]+b[3])//2;end=max(100,b[1]//4)
+        else:
+            listing=next(dict(n.attrib) for n in root.iter("node") if n.get("resource-id")=="android:id/resolver_list")
+            b=bounds(listing);x=b[2]-10;start=int(b[1]+(b[3]-b[1])*.8);end=int(b[1]+(b[3]-b[1])*.3)
+        r.adbcall("shell","input","swipe",x,start,x,end,650)
+        time.sleep(.5)
     assert len(matches)==1,"Dedicated test receiver absent from Android chooser"
     parents={child:parent for parent in root.iter() for child in parent}
     target=matches[0]

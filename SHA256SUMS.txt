@@ -1,2 +1,6 @@
 3209c040f1cc6fbe4e396ec4753746cd1f73f88c46bebffa01f7a62fb757cfc6  apk/Cyclone-3.2.apk
 9de75384559c7e01a3b27eeefcc5506a65b42e126eef180244028fe7717ba092  demo/images-100-jpeg.zip
+6830df983cfac3ccf11eef169a1fbf6bbd20b7d59ef2d74ec97fa4cc7d40462b  apk/Cyclone-3.2-debug.apk
+9a298cb84b46eb2a253d59fd1d4f37c357f4c500f2b7d53965ad166ac0858bab  docs/bao-cao/BAO_CAO_CYCLONE_3_2_HOAN_CHINH.docx
+3723dd2efa5b0c93aac7e53e2d21e2b890c5435d2ad028523ffd3e5055b781d5  docs/bao-cao/BAO_CAO_CYCLONE_3_2_HOAN_CHINH.pdf
+5cd590b69c0db7ce435efdc554cdff3bb0b1e7d7489fb067c30e58a1489a45cf  docs/ket-qua-may-ao/Cyclone-3.2-Pixel5-API31-2026-11-03.zip

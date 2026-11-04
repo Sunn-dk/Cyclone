@@ -16,3 +16,8 @@ data_sources { config { name: "linux.process_stats" process_stats_config {
   scan_all_processes_on_start: true
   proc_stats_poll_ms: 250
 } } }
+data_sources { config { name: "android.surfaceflinger.frametimeline" } }
+data_sources { config { name: "android.log" android_log_config {
+  log_ids: LID_DEFAULT
+  filter_tags: "IMG_BENCH"
+} } }

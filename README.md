@@ -1,5 +1,16 @@
 # Cyclone 3.2
 
+## Báo cáo và dữ liệu để chuẩn bị nộp
+
+Cập nhật ngày 04/11/2026. Tải toàn bộ bằng **Code → Download ZIP**, hoặc clone repository.
+
+- [Báo cáo PDF hoàn chỉnh](docs/bao-cao/BAO_CAO_CYCLONE_3_2_HOAN_CHINH.pdf), [bản Word](docs/bao-cao/BAO_CAO_CYCLONE_3_2_HOAN_CHINH.docx).
+- [Số liệu và minh chứng máy ảo](docs/ket-qua-may-ao/README.md): bảng CSV, biểu đồ và ZIP dữ liệu gốc của đợt 03/11/2026 dùng trong báo cáo.
+- [APK benchmark để demo/đo](apk/Cyclone-3.2.apk), [APK debug](apk/Cyclone-3.2-debug.apk).
+- [Tái tạo trước/sau A và D](docs/D5_TAI_TAO_TRUOC_SAU.md); hướng dẫn build và chạy ở các mục dưới.
+
+Mã Kotlin và APK vẫn là phiên bản 3.2/code5. Lần cập nhật này bổ sung tài liệu, minh chứng và công cụ kiểm thử; không tạo số đo mới. Video không nằm trong bản cập nhật này.
+
 Ứng dụng Android viết bằng **Kotlin/XML/RecyclerView** để xem ảnh và thử nghiệm tối ưu tải ảnh. Có danh sách100/500/1.000 mục, màn chi tiết, placeholder/ảnh lỗi, cache RAM/đĩa và cấu hình trước/sau tối ưu.
 
 ## Chạy ngay bằng APK
@@ -114,7 +125,10 @@ Bộ lớn cần khoảng1GB dung lượng ảnh, không được tạo mặc đ
 python -m pip install -r scripts/requirements.txt
 python -m unittest discover -s tests/server
 python scripts/test_cpu_sampling.py
+python scripts/test_ui_helpers.py
 ```
+
+Giải thích và lệnh tái tạo hai phiên bản cơ sở A / tối ưu D theo D5: [D5 Tái tạo trước sau](docs/D5_TAI_TAO_TRUOC_SAU.md). Bản phát hành 3.0 không phải baseline của phép so A/D này.
 
 Đã kiểm tra APK3.2 trên máy ảo Android12/API31. Yêu cầu tối thiểu API26 là cấu hình build; chưa thử mọi điện thoại/phiên bản Android. Picsum cần Internet và phụ thuộc dịch vụ ngoài; bộ local là lựa chọn độc lập. Kiểm SHA256 của APK và bộ ảnh theo [SHA256SUMS.txt](SHA256SUMS.txt).
 
