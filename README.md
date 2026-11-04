@@ -1,135 +1,90 @@
 # Cyclone 3.2
 
-## Báo cáo và dữ liệu để chuẩn bị nộp
+Demo tối ưu ảnh Android bằng Kotlin/XML/RecyclerView. Repo chỉ gồm source app, một APK demo, bộ ảnh mẫu, cấu hình A/D và công cụ chạy lại cơ bản.
 
-Cập nhật ngày 04/11/2026. Tải toàn bộ bằng **Code → Download ZIP**, hoặc clone repository.
+## 1. Cài APK và chạy ngay
 
-- [Báo cáo PDF hoàn chỉnh](docs/bao-cao/BAO_CAO_CYCLONE_3_2_HOAN_CHINH.pdf), [bản Word](docs/bao-cao/BAO_CAO_CYCLONE_3_2_HOAN_CHINH.docx).
-- [Số liệu và minh chứng máy ảo](docs/ket-qua-may-ao/README.md): bảng CSV, biểu đồ và ZIP dữ liệu gốc của đợt 03/11/2026 dùng trong báo cáo.
-- [APK benchmark để demo/đo](apk/Cyclone-3.2.apk), [APK debug](apk/Cyclone-3.2-debug.apk).
-- [Tái tạo trước/sau A và D](docs/D5_TAI_TAO_TRUOC_SAU.md); hướng dẫn build và chạy ở các mục dưới.
+Tải [Cyclone-3.2.apk](apk/Cyclone-3.2.apk), cài trên Android 8.0/API26 trở lên. Đã kiểm tra trên máy ảo Android 12/API31.
 
-Mã Kotlin và APK vẫn là phiên bản 3.2/code5. Lần cập nhật này bổ sung tài liệu, minh chứng và công cụ kiểm thử; không tạo số đo mới. Video không nằm trong bản cập nhật này.
+Mở Cyclone → Thử nghiệm → nguồn `https://picsum.photos`, cấu hình D, 100 mục, JPEG, version 1, độ trễ 0, tắt chèn lỗi → Áp dụng nguồn ảnh → quay lại. Cần Internet khi dùng Picsum. Cuộn danh sách, chạm ảnh để xem chi tiết; thử Tải lại và xóa cache trong Thử nghiệm.
 
-Ứng dụng Android viết bằng **Kotlin/XML/RecyclerView** để xem ảnh và thử nghiệm tối ưu tải ảnh. Có danh sách100/500/1.000 mục, màn chi tiết, placeholder/ảnh lỗi, cache RAM/đĩa và cấu hình trước/sau tối ưu.
-
-## Chạy ngay bằng APK
-
-1. Tải [apk/Cyclone-3.2.apk](apk/Cyclone-3.2.apk), chép vào điện thoại Android8.0/API26 trở lên và cài đặt. Đây là APK benchmark dùng chạy demo; tên ứng dụng là **Cyclone**.
-2. Mở Cyclone, dùng Internet để tải ảnh Picsum. Mặc định D/100/JPEG. Nếu đã cài bản cũ, vào **Thử nghiệm** đặt nguồn `https://picsum.photos`, JPEG, độ trễ0 và tắt chèn lỗi; nhấn **Áp dụng nguồn ảnh** rồi quay lại.
-3. Cuộn ảnh, chạm một mục để xem chi tiết. D/E dùng ảnh720px cho danh sách và1600px cho chi tiết; bitmap được giải mã theo view.
-
-Có thể cài qua USB bằng Android SDK Platform-Tools:
+Cài qua USB nếu cần:
 
 ```sh
 adb devices -l
 adb -s SERIAL install -r apk/Cyclone-3.2.apk
 ```
 
-Thay `SERIAL` bằng thiết bị của bạn. Nếu Android báo khác chữ ký giữa APK tải sẵn và APK tự build trên máy khác, hãy xuất/lưu kết quả app trước, rồi gỡ bản cũ và cài bản mới. Không tự xóa dữ liệu khi chưa sao lưu.
+Thay `SERIAL` bằng mã máy ảo/thiết bị. Nếu khác chữ ký với bản cũ, sao lưu kết quả app trước khi gỡ bản cũ để cài mới.
 
-## Lấy source và build trên máy khác
+## 2. Mở source trong Android Studio
+
+Tải Code → Download ZIP và giải nén, hoặc:
 
 ```sh
 git clone https://github.com/Sunn-dk/Cyclone.git
 cd Cyclone
 ```
 
-Cần Android Studio, **JDK17**, Android SDK Platform34 và Build-Tools34.0.0. Lần sync/build đầu cần Internet để tải Gradle và dependency. Không cần Python khi chỉ cài APK/chạy ảnh Internet.
+Open thư mục có `settings.gradle.kts`. Cài SDK Platform 34 và Build-Tools 34.0.0; chọn Gradle JDK 17 → Sync → module `app` → chọn máy ảo → Run. Lần đầu cần Internet để tải dependency. Android Studio tạo `local.properties` theo SDK của máy đang dùng.
 
-- Android Studio -> Open -> chọn thư mục repository chứa `settings.gradle.kts`.
-- SDK Manager -> cài Android SDK Platform34, Build-Tools34.0.0 và Platform-Tools.
-- Gradle Settings -> chọn Gradle JDK17; Sync. Android Studio tạo `local.properties` theo SDK trên máy bạn; không chép đường dẫn SDK của máy khác.
-- Chọn module **app**, thiết bị Android/API26 trở lên rồi Run. Module probe chỉ là helper kiểm tra chia sẻ ZIP.
-
-Windows PowerShell, từ gốc repository:
+Build bằng PowerShell tại gốc repo:
 
 ```powershell
-.\gradlew.bat :app:assembleDebug :app:assembleBenchmark :app:lintDebug
+.\gradlew.bat :app:assembleDebug :app:assembleBenchmark
 ```
 
-macOS/Linux:
+macOS/Linux dùng `./gradlew` với cùng tác vụ. APK tạo ở `app/build/outputs/apk/`. Debug dùng phát triển; benchmark dùng demo/đo. APK tải sẵn là benchmark 3.2/code5.
 
-```sh
-./gradlew :app:assembleDebug :app:assembleBenchmark :app:lintDebug
-```
+## 3. Chạy ảnh mẫu local
 
-Nếu dùng terminal, đặt `JAVA_HOME` tới JDK17 và `ANDROID_HOME` tới SDK trên máy bạn, hoặc cấu hình `sdk.dir` trong `local.properties`. APK mới ở `app/build/outputs/apk/debug/` và `benchmark/`. Debug để phát triển; benchmark để đo. A/D là cấu hình trong cùng app, không phải hai loại build này.
+[images-100-jpeg.zip](demo/images-100-jpeg.zip) gồm 100 ảnh JPEG, mỗi ảnh có ba kích thước. Cần Python 3.10 trở lên và `adb` trong PATH; không cần cài thư viện Python để phục vụ bộ ảnh có sẵn.
 
-## Chạy nguồn ảnh local có sẵn, không phụ thuộc Picsum
-
-Repo kèm [demo/images-100-jpeg.zip](demo/images-100-jpeg.zip): **100ảnh JPEG x3 kích thước =300tệp**. Bộ này phục vụ D/A/B/C/E với100 mục; chọn JPEG. Không đổi sang500/1000 hoặc PNG/WebP khi dùng bộ100 này.
-
-Cần Python3.10 trở lên và `adb` trong PATH. Khi chỉ phục vụ bộ ZIP đã có, server dùng thư viện chuẩn Python, không cần Pillow.
-
-Mở terminal thứ nhất ở gốc repository:
+Terminal thứ nhất ở gốc repo:
 
 ```sh
 python -m zipfile -e demo/images-100-jpeg.zip datasets/demo-100
 python scripts/image_server.py --dir datasets/demo-100
 ```
 
-Trên macOS/Linux có thể dùng `python3` thay `python`. Giữ terminal server mở.
-
-Mở terminal thứ hai:
+Giữ server chạy. Terminal thứ hai:
 
 ```sh
 adb devices -l
 adb -s SERIAL reverse tcp:8000 tcp:8000
 ```
 
-Trong Cyclone -> Thử nghiệm:
+Trong Thử nghiệm: nguồn `http://127.0.0.1:8000`, 100 mục, JPEG, version 1, độ trễ 0, tắt chèn lỗi → Áp dụng nguồn ảnh → quay lại → Tải lại. Bộ mẫu chỉ có 100 mục/JPEG; không chọn 500/1.000 hoặc PNG/WebP với bộ này. Sau khi khởi động lại máy ảo, chạy lại reverse.
 
-- Chọn D,100,JPEG; version1; độ trễ0; tắt chèn lỗi.
-- Nguồn `http://127.0.0.1:8000` -> Áp dụng -> quay lại -> Tải lại.
-- Địa chỉ127.0.0.1 trên điện thoại đi qua `adb reverse`; không nhập IP LAN của máy tính. Sau khi rút USB/tắt máy ảo, chạy lại reverse ở lần kết nối sau.
+Kiểm tra mất kết nối nguồn thử bằng `adb -s SERIAL reverse --remove tcp:8000`; khôi phục bằng lệnh reverse phía trên. Dừng server bằng Ctrl+C. Không cần đổi mạng toàn hệ thống.
 
-Chỉ ngắt nguồn thử local khi kiểm tra offline:
+## 4. So sánh A và D
 
-```sh
-adb -s SERIAL reverse --remove tcp:8000
-```
+- A: ảnh gốc, giải mã gốc, tắt cache; vẫn tải bất đồng bộ.
+- D: cache RAM/đĩa, giải mã theo ô, thumbnail 720 px; ảnh chi tiết 1.600 px.
+- B/C/E là các cấu hình trung gian và biến thể trong app.
 
-Khôi phục bằng lệnh reverse phía trên. Dừng server bằng Ctrl+C. Các thao tác này không thay Wi-Fi/cellular toàn hệ thống.
+Chọn A rồi D, giữ cùng nguồn, số mục và thao tác. A/D là hai cấu hình trong cùng app, không phải debug/benchmark. Xem [cách tái tạo A/D](docs/D5_TAI_TAO_TRUOC_SAU.md).
 
-## Cấu hình và tạo bộ ảnh lớn
-
-- [configs/baseline-A.json](configs/baseline-A.json): raw3000, giải mã gốc, cache tắt; vẫn tải bất đồng bộ và xử lý lỗi.
-- [configs/optimized-D.json](configs/optimized-D.json): cache bật, giải mã theo ô, thumbnail720; chi tiết1600.
-- B thêm cache; C thêm downsampling; E thêm crossfade/preview.
-
-Để chạy một lượt với bộ100 có sẵn:
+Chạy tự động một lượt mỗi cấu hình: dừng server tương tác trước, vì runner tự mở server.
 
 ```sh
-python scripts/run_one.py --config configs/baseline-A.json --fixtures datasets/demo-100 --serial SERIAL --out results/baseline-moi
-python scripts/run_one.py --config configs/optimized-D.json --fixtures datasets/demo-100 --serial SERIAL --out results/optimized-moi
+python scripts/run_one.py --config configs/baseline-A.json --fixtures datasets/demo-100 --serial SERIAL --out results/A-moi
+python scripts/run_one.py --config configs/optimized-D.json --fixtures datasets/demo-100 --serial SERIAL --out results/D-moi
 ```
 
-Dừng server tương tác trước khi dùng runner vì runner tự mở cổng8000. Luôn chọn `--out` mới; công cụ không ghi đè dữ liệu đã đo. `adb` có thể truyền bằng `--adb DUONG_DAN_ADB` nếu chưa có trong PATH.
+Dùng `--out` mới mỗi lần để giữ kết quả cũ. Chỉ so kết quả cùng điều kiện; không quay video khi đo.
 
-Muốn có1.000 mục/JPEG-PNG-WebP và bộ cập nhật nội dung, cài Pillow rồi tạo ảnh trước khi mở server:
+## 5. Tùy chọn tạo ảnh cho 500/1.000 mục và định dạng khác
+
+Chỉ dùng phần này khi cần bộ lớn, khoảng 1 GB. Pillow dùng để tạo và kiểm tra ảnh mới.
 
 ```sh
 python -m pip install -r scripts/requirements.txt
 python scripts/image_server.py --prepare --dir datasets/fixtures --count 1000 --format ALL --version 1
-python scripts/image_server.py --prepare --dir datasets/updated-v2 --count 100 --format JPEG --version 2
 python scripts/verify_dataset.py datasets/fixtures --out results/dataset-verification.json
-python scripts/image_server.py --dir datasets/fixtures
 ```
 
-Bộ lớn cần khoảng1GB dung lượng ảnh, không được tạo mặc định khi cài app. Bytes/hash ảnh tái tạo có thể khác giữa các phiên bản Pillow; luôn dùng manifest của chính bộ đang chạy. Thử nghiệm ảnh đổi dùng URL phiên bản mới hoặc xóa cache; app không tự ETag revalidate.
+Thay `datasets/demo-100` bằng `datasets/fixtures` khi mở server/chạy runner. Hash ảnh mới phụ thuộc bản Pillow; giữ manifest của bộ đang dùng. Kiểm tra server bằng `python -m unittest discover -s tests/server`.
 
-## Kiểm tra và giới hạn
-
-```sh
-python -m pip install -r scripts/requirements.txt
-python -m unittest discover -s tests/server
-python scripts/test_cpu_sampling.py
-python scripts/test_ui_helpers.py
-```
-
-Giải thích và lệnh tái tạo hai phiên bản cơ sở A / tối ưu D theo D5: [D5 Tái tạo trước sau](docs/D5_TAI_TAO_TRUOC_SAU.md). Bản phát hành 3.0 không phải baseline của phép so A/D này.
-
-Đã kiểm tra APK3.2 trên máy ảo Android12/API31. Yêu cầu tối thiểu API26 là cấu hình build; chưa thử mọi điện thoại/phiên bản Android. Picsum cần Internet và phụ thuộc dịch vụ ngoài; bộ local là lựa chọn độc lập. Kiểm SHA256 của APK và bộ ảnh theo [SHA256SUMS.txt](SHA256SUMS.txt).
-
-Mã nguồn giữ Gradle8.7, AGP8.5.2, Kotlin1.9.24, Coil2.7.0. Không đóng gói JDK, SDK, cache Gradle, `local.properties` hoặc khóa ký của máy phát triển.
+Kiểm SHA-256 APK và ZIP ảnh mẫu theo [SHA256SUMS.txt](SHA256SUMS.txt). Repo không kèm SDK/JDK, cache build, khóa ký hoặc kết quả đo của máy phát triển.
