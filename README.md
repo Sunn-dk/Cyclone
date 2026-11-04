@@ -1,90 +1,147 @@
-# Cyclone 3.2
+# Cyclone 3.2 — Hướng dẫn Chạy ứng dụng & Tái hiện Phép đo
 
-Demo tối ưu ảnh Android bằng Kotlin/XML/RecyclerView. Repo chỉ gồm source app, một APK demo, bộ ảnh mẫu, cấu hình A/D và công cụ chạy lại cơ bản.
+Ứng dụng Android demo tối ưu hóa tải ảnh, lưu trữ đệm (Caching) và hiển thị lưới so le bằng **Kotlin + XML + RecyclerView + Coil 2.7.0**. 
 
-## 1. Cài APK và chạy ngay
+---
 
-Tải [Cyclone-3.2.apk](apk/Cyclone-3.2.apk), cài trên Android 8.0/API26 trở lên. Đã kiểm tra trên máy ảo Android 12/API31.
+## 1. Cài đặt & Chạy ngay (30 giây)
 
-Mở Cyclone → Thử nghiệm → nguồn `https://picsum.photos`, cấu hình D, 100 mục, JPEG, version 1, độ trễ 0, tắt chèn lỗi → Áp dụng nguồn ảnh → quay lại. Cần Internet khi dùng Picsum. Cuộn danh sách, chạm ảnh để xem chi tiết; thử Tải lại và xóa cache trong Thử nghiệm.
+### Bước 1: Cài đặt APK
+Tải [apk/Cyclone-3.2.apk](apk/Cyclone-3.2.apk) và cài lên điện thoại hoặc máy ảo Android (từ Android 8.0 / API 26 trở lên, khuyến nghị Android 12 / API 31).
 
-Cài qua USB nếu cần:
-
+Cài nhanh qua cổng USB/máy ảo bằng lệnh `adb`:
 ```sh
-adb devices -l
-adb -s SERIAL install -r apk/Cyclone-3.2.apk
+adb install -r apk/Cyclone-3.2.apk
 ```
 
-Thay `SERIAL` bằng mã máy ảo/thiết bị. Nếu khác chữ ký với bản cũ, sao lưu kết quả app trước khi gỡ bản cũ để cài mới.
+### Bước 2: Chọn nguồn ảnh để chạy
 
-## 2. Mở source trong Android Studio
+* **Cách A — Dùng ảnh Internet (Picsum, nhanh nhất, cần mạng Wi-Fi):**
+  1. Mở ứng dụng **Cyclone**.
+  2. Bấm nút **Thử nghiệm** (góc trên phải) → ở mục **02 / Nguồn ảnh**, nhập:
+     `https://picsum.photos`
+  3. Chọn **Cấu hình D** (tối ưu), **100 mục**, định dạng **JPEG**, độ trễ **0 ms**, tắt công tắc chèn lỗi.
+  4. Bấm **Áp dụng nguồn ảnh** → bấm **Về bộ sưu tập** để xem ảnh.
 
-Tải Code → Download ZIP và giải nén, hoặc:
+* **Cách B — Dùng ảnh cục bộ (Local Server, chuẩn xác 100%, không cần Internet):**
+  1. Mở **Terminal 1** tại thư mục dự án để bật máy chủ ảnh:
+     ```sh
+     # Giải nén bộ 100 ảnh mẫu (nếu chưa giải nén)
+     python -m zipfile -e demo/images-100-jpeg.zip datasets/demo-100
+     
+     # Chạy máy chủ ảnh nội bộ
+     python scripts/image_server.py --dir datasets/demo-100
+     ```
+  2. Mở **Terminal 2** để chuyển tiếp cổng vào điện thoại/máy ảo:
+     ```sh
+     adb reverse tcp:8000 tcp:8000
+     ```
+  3. Trên ứng dụng Cyclone → vào **Thử nghiệm** → nhập địa chỉ:
+     `http://127.0.0.1:8000`
+  4. Bấm **Áp dụng nguồn ảnh** → bấm **Về bộ sưu tập** → bấm **Tải lại**.
 
+---
+
+## 2. Mở mã nguồn trong Android Studio
+
+1. **Yêu cầu môi trường:** Android Studio, **JDK 17**, Android SDK Platform **34**, Build-Tools **34.0.0**.
+2. **Mở dự án:** Khởi động Android Studio → **Open** → chọn thư mục chứa tệp `settings.gradle.kts`.
+3. **Đồng bộ & Chạy:** Chờ Gradle Sync xong → chọn module **`app`** → chọn thiết bị chạy → bấm **Run (Shift + F10)**.
+
+Build trực tiếp bằng dòng lệnh:
+* **Windows (PowerShell):**
+  ```powershell
+  .\gradlew.bat :app:assembleDebug :app:assembleBenchmark
+  ```
+* **macOS / Linux:**
+  ```sh
+  ./gradlew :app:assembleDebug :app:assembleBenchmark
+  ```
+*(Tệp APK xuất ra tại: `app/build/outputs/apk/debug/` và `app/build/outputs/apk/benchmark/`)*
+
+---
+
+## 3. Cách tái hiện các phép đo (Trước vs Sau Tối ưu)
+
+Nhóm tích hợp sẵn 5 cấu hình ngay trong 1 APK để đối chứng khoa học:
+* **Cấu hình A (Trước tối ưu - Baseline):** Tải ảnh gốc 3.000 px, giải mã nguyên bản `Size.ORIGINAL`, tắt hoàn toàn bộ nhớ đệm (Cache).
+* **Cấu hình D (Sau tối ưu - Optimized):** Tải Thumbnail 720 px cho danh sách, giải mã theo kích thước hiển thị ô ImageView, bật Cache RAM 25% + Disk 150 MiB, chi tiết tải ảnh 1.600 px.
+
+---
+
+### Cách 1: Tái hiện trực quan trên giao diện ứng dụng (Thực hiện khi chấm Demo)
+
+Mở màn hình **Thử nghiệm** trên app Cyclone để kiểm chứng từng tiêu chí:
+
+1. **So sánh Độ mượt & Tiêu thụ RAM khi cuộn danh sách (Yêu cầu 1, 4, 5):**
+   * **Với Cấu hình A:** Chọn **A** → Bấm **Xóa RAM + đĩa** → Bấm **Đặt lại thống kê** → Bấm **Bắt đầu đo** → Bấm **Về bộ sưu tập** → Bấm **Tự cuộn** (cuộn trong 8 giây).
+     * *Hiện tượng:* Danh sách bị giật khựng, nhiều ô chưa kịp hiện ảnh, đỉnh RAM PSS vọt lên **~160–170 MiB**, dọn rác GC chạy liên tục >10 lần.
+   * **Với Cấu hình D:** Chọn **D** → Bấm **Xóa RAM + đĩa** → Bấm **Bắt đầu đo** → Bấm **Về bộ sưu tập** → Bấm **Tự cuộn**.
+     * *Hiện tượng:* Danh sách cuộn cực kỳ mượt mà, ảnh hiện nhanh, đỉnh RAM PSS giảm hơn một nửa xuống chỉ còn **~76 MiB**, GC chỉ chạy 1 lần.
+
+2. **Kiểm tra Cơ chế Bộ nhớ đệm Cache (Yêu cầu 3):**
+   * **RAM Cache Hit:** Sau khi tải xong danh sách ở Cấu hình D, bấm **Tải lại** → Ảnh hiển thị tức thì sau **~61 ms**, thời gian request = **`0 ms`** (`MEMORY_CACHE = 5`).
+   * **Disk Cache Hit:** Vào **Thử nghiệm** → bấm **Xóa cache RAM** (giữ lại Disk) → quay lại bấm **Tải lại** → Ảnh đọc thành công từ đĩa mà không tốn mạng (`DISK = 5`, `NETWORK = 0`).
+
+3. **Kiểm tra Chế độ Mất mạng Offline & Ảnh lỗi HTTP 404 (Yêu cầu 1, 2, 3):**
+   * **Thử Offline:** Tại Terminal gõ `adb reverse --remove tcp:8000` rồi bấm **Tải lại** trên app: Các ảnh đã cache vẫn hiển thị bình thường; các ô chưa cache hiển thị ảnh lỗi dự phòng an toàn, không sập ứng dụng. Bật lại mạng bằng `adb reverse tcp:8000 tcp:8000`.
+   * **Thử lỗi 404 & Mạng chậm:** Vào **Thử nghiệm** → Bật công tắc **Chèn ảnh lỗi** (gây lỗi 404 ở các mục chia hết cho 10) + đặt **Độ trễ máy chủ** = `1500 ms` → Bấm **Áp dụng nguồn ảnh**. Giao diện vẫn cuộn mượt không bị đơ ANR, đúng mục số 10 hiện icon báo lỗi.
+
+4. **Kiểm tra Màn hình Chi tiết & Khôi phục vị trí (Yêu cầu 1, 2):**
+   * Bấm vào 1 sản phẩm bất kỳ: Màn hình chi tiết nạp ảnh nét phân giải cao 1.600 px.
+   * Bấm nút **Quay lại** (hoặc xoay ngang/dọc màn hình): Ứng dụng giữ nguyên chính xác vị trí cuộn trước đó.
+
+---
+
+### Cách 2: Tái hiện tự động bằng Dòng lệnh (CLI Scripts)
+
+Dành cho việc kiểm tra định lượng tự động, xuất số liệu ra CSV/JSON:
+
+> **Lưu ý:** Trước khi chạy script, hãy đóng máy chủ tương tác ở mục 1 (nhấn `Ctrl + C`) vì các script sẽ tự động quản lý máy chủ riêng.
+
+1. **Đo nhanh 1 lượt cấu hình Trước tối ưu (A) vs Sau tối ưu (D):**
+   ```sh
+   # Đo Cấu hình A (Trước tối ưu)
+   python scripts/run_one.py --config configs/baseline-A.json --fixtures datasets/demo-100 --out results/A-moi
+
+   # Đo Cấu hình D (Sau tối ưu)
+   python scripts/run_one.py --config configs/optimized-D.json --fixtures datasets/demo-100 --out results/D-moi
+   ```
+   *Kết quả tóm tắt in ngay trên Terminal và lưu chi tiết tại thư mục `results/`.*
+
+2. **Chạy toàn bộ 14 bài kiểm thử chức năng tự động (Functional Suite):**
+   ```sh
+   python scripts/run_suite.py --fixtures datasets/demo-100 --out results/kiem-thu-chuc-nang --suite functional
+   ```
+   *Script tự động kiểm tra lần lượt: Tải lạnh, RAM cache, Disk cache, Khởi động lại app, Mất mạng offline, Xóa cache khi offline, Phục hồi mạng, Lỗi 404, Mạng chậm 2s, Timeout 15s, Định dạng PNG/WebP.*
+
+---
+
+## 4. Bảng số liệu đối chứng tiêu biểu (Đo trên Pixel 5 / API 31)
+
+| Chỉ số đo lường | Trước tối ưu (Cấu hình A) | Sau tối ưu (Cấu hình D) | Mức độ cải thiện |
+| :--- | :---: | :---: | :---: |
+| **Thời gian nạp hiển thị khung nhìn đầu** | `1.057 ms` | **`739 ms`** | **Nhanh hơn 30,1%** |
+| **Thời gian tải lại danh sách (Reload)** | `1.361 ms` | **`61 ms`** | **Nhanh hơn 95,5%** (RAM Hit) |
+| **Đỉnh bộ nhớ tiến trình (Sampled PSS Peak)** | `173,5 MiB` | **`76,2 MiB`** | **Tiết kiệm 56,1% RAM** |
+| **Băng thông mạng tải danh sách 100 ảnh** | `6,92 MB` | **`1,01 MB`** | **Giảm 85,5% dung lượng tải** |
+| **Thời gian giải mã mỗi ảnh khi cuộn (Decode)** | `244–334 ms` | **`43–82 ms`** | **Nhanh gấp ~4 lần** |
+| **Thời gian dừng dọn rác bộ nhớ (GC time)** | `650–1.133 ms` (11–13 lần) | **`54–107 ms` (1 lần)** | **Giảm hơn 85% áp lực GC** |
+| **Độ trễ khung hình khi cuộn (Frame p90)** | `160,56 ms` | **`56,42 ms`** | **Giảm 64,8% độ trễ (mượt hơn)** |
+
+---
+
+## 5. Tùy chọn nâng cao: Tạo bộ ảnh 1.000 mục & các định dạng khác
+
+Nếu muốn mở rộng thử nghiệm lên quy mô lớn (1.000 ảnh × 3 kích thước × 3 định dạng JPEG/PNG/WebP = 9.000 tệp ~ 1 GB):
 ```sh
-git clone https://github.com/Sunn-dk/Cyclone.git
-cd Cyclone
-```
-
-Open thư mục có `settings.gradle.kts`. Cài SDK Platform 34 và Build-Tools 34.0.0; chọn Gradle JDK 17 → Sync → module `app` → chọn máy ảo → Run. Lần đầu cần Internet để tải dependency. Android Studio tạo `local.properties` theo SDK của máy đang dùng.
-
-Build bằng PowerShell tại gốc repo:
-
-```powershell
-.\gradlew.bat :app:assembleDebug :app:assembleBenchmark
-```
-
-macOS/Linux dùng `./gradlew` với cùng tác vụ. APK tạo ở `app/build/outputs/apk/`. Debug dùng phát triển; benchmark dùng demo/đo. APK tải sẵn là benchmark 3.2/code5.
-
-## 3. Chạy ảnh mẫu local
-
-[images-100-jpeg.zip](demo/images-100-jpeg.zip) gồm 100 ảnh JPEG, mỗi ảnh có ba kích thước. Cần Python 3.10 trở lên và `adb` trong PATH; không cần cài thư viện Python để phục vụ bộ ảnh có sẵn.
-
-Terminal thứ nhất ở gốc repo:
-
-```sh
-python -m zipfile -e demo/images-100-jpeg.zip datasets/demo-100
-python scripts/image_server.py --dir datasets/demo-100
-```
-
-Giữ server chạy. Terminal thứ hai:
-
-```sh
-adb devices -l
-adb -s SERIAL reverse tcp:8000 tcp:8000
-```
-
-Trong Thử nghiệm: nguồn `http://127.0.0.1:8000`, 100 mục, JPEG, version 1, độ trễ 0, tắt chèn lỗi → Áp dụng nguồn ảnh → quay lại → Tải lại. Bộ mẫu chỉ có 100 mục/JPEG; không chọn 500/1.000 hoặc PNG/WebP với bộ này. Sau khi khởi động lại máy ảo, chạy lại reverse.
-
-Kiểm tra mất kết nối nguồn thử bằng `adb -s SERIAL reverse --remove tcp:8000`; khôi phục bằng lệnh reverse phía trên. Dừng server bằng Ctrl+C. Không cần đổi mạng toàn hệ thống.
-
-## 4. So sánh A và D
-
-- A: ảnh gốc, giải mã gốc, tắt cache; vẫn tải bất đồng bộ.
-- D: cache RAM/đĩa, giải mã theo ô, thumbnail 720 px; ảnh chi tiết 1.600 px.
-- B/C/E là các cấu hình trung gian và biến thể trong app.
-
-Chọn A rồi D, giữ cùng nguồn, số mục và thao tác. A/D là hai cấu hình trong cùng app, không phải debug/benchmark. Xem [cách tái tạo A/D](docs/D5_TAI_TAO_TRUOC_SAU.md).
-
-Chạy tự động một lượt mỗi cấu hình: dừng server tương tác trước, vì runner tự mở server.
-
-```sh
-python scripts/run_one.py --config configs/baseline-A.json --fixtures datasets/demo-100 --serial SERIAL --out results/A-moi
-python scripts/run_one.py --config configs/optimized-D.json --fixtures datasets/demo-100 --serial SERIAL --out results/D-moi
-```
-
-Dùng `--out` mới mỗi lần để giữ kết quả cũ. Chỉ so kết quả cùng điều kiện; không quay video khi đo.
-
-## 5. Tùy chọn tạo ảnh cho 500/1.000 mục và định dạng khác
-
-Chỉ dùng phần này khi cần bộ lớn, khoảng 1 GB. Pillow dùng để tạo và kiểm tra ảnh mới.
-
-```sh
+# Cài đặt Pillow để tạo ảnh
 python -m pip install -r scripts/requirements.txt
+
+# Tạo bộ 1.000 ảnh chuẩn
 python scripts/image_server.py --prepare --dir datasets/fixtures --count 1000 --format ALL --version 1
+
+# Xác minh tính toàn vẹn của tập dữ liệu
 python scripts/verify_dataset.py datasets/fixtures --out results/dataset-verification.json
 ```
-
-Thay `datasets/demo-100` bằng `datasets/fixtures` khi mở server/chạy runner. Hash ảnh mới phụ thuộc bản Pillow; giữ manifest của bộ đang dùng. Kiểm tra server bằng `python -m unittest discover -s tests/server`.
-
-Kiểm SHA-256 APK và ZIP ảnh mẫu theo [SHA256SUMS.txt](SHA256SUMS.txt). Repo không kèm SDK/JDK, cache build, khóa ký hoặc kết quả đo của máy phát triển.
+Khi chạy với bộ lớn, chỉ cần thay tham số đường dẫn `--fixtures datasets/fixtures`.
